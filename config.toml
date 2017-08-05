@@ -1,4 +1,0 @@
-baseURL = "https://faiface.github.io"
-languageCode = "en-us"
-title = "faiface blog"
-publishDir = "."
