@@ -1,23 +1,24 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes" ?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>My New Hugo Site</title>
+    <title>faiface blog</title>
     <link>https://faiface.github.io/</link>
-    <description>Recent content on My New Hugo Site</description>
+    <description>Recent content on faiface blog</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Sat, 05 Aug 2017 17:38:12 +0200</lastBuildDate>
+    <lastBuildDate>Sun, 06 Aug 2017 18:58:25 +0200</lastBuildDate>
     
 	<atom:link href="https://faiface.github.io/index.xml" rel="self" type="application/rss+xml" />
     
     
     <item>
-      <title>My First Post</title>
-      <link>https://faiface.github.io/post/my-first-post/</link>
-      <pubDate>Sat, 05 Aug 2017 17:38:12 +0200</pubDate>
+      <title>Context should go away for Go 2</title>
+      <link>https://faiface.github.io/post/context-should-go-away-go2/</link>
+      <pubDate>Sun, 06 Aug 2017 18:58:25 +0200</pubDate>
       
-      <guid>https://faiface.github.io/post/my-first-post/</guid>
-      <description> Hello, world! </description>
+      <guid>https://faiface.github.io/post/context-should-go-away-go2/</guid>
+      <description>As usual, when a new blog post comes out on blog.golang.org, I&amp;rsquo;m all eager to read it as soon as possible. The most recent one, Contributors Summit, is a nice write-up on the issues that the Go contributors have been talking about. While reading it, I stumbled upon a sentence that made me write this post. Here is is:
+ For instance, it would be nice if io.Reader accepted a context so that blocking read operations could be canceled.</description>
     </item>
     
   </channel>
