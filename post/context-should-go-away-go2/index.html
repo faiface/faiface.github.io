@@ -99,12 +99,12 @@ a context in those functions.</p>
 <li>Now, everyone has to deal with the context, even the ones who don&rsquo;t need it.</li>
 </ol>
 
-<p>Of course, I can just pass <code>context.TODO</code> everywhere, but that&rsquo;s just gross, it hurts readability,
+<p>Of course, I can just pass <code>context.TODO()</code> everywhere, but that&rsquo;s just gross, it hurts readability,
 makes my code look ugly and simply removes a part of fun I have with Go.</p>
 
 <p>If the Go language ever comes to the point where I&rsquo;d have to write this</p>
 
-<pre><code class="language-go">n, err := r.Read(context.TODO, p)
+<pre><code class="language-go">n, err := r.Read(context.TODO(), p)
 </code></pre>
 
 <p>put a bullet in my head, please.</p>
@@ -117,7 +117,7 @@ partially, it smells quite bad.</p>
 <p>Also, imagine teaching Go to a student. You start explaining the context-equipped <code>io.Reader</code>
 interface (or anything else which occasionally requires a context) to them and they ask: <em>What is
 that <code>ctx context.Context</code> thingy there?</em> And the answer would probably just be: <em>Don&rsquo;t worry about
-that, just pass <code>context.TODO</code> there for now.</em> Sounds a lot like <code>public static void</code> to me.</p>
+that, just pass <code>context.TODO()</code> there for now.</em> Sounds a lot like <code>public static void</code> to me.</p>
 
 <p>The message is: Context spreads like a virus and I (alongside almost everyone who doesn&rsquo;t write
 servers in Go) don&rsquo;t want to deal with it when I don&rsquo;t have to.</p>
