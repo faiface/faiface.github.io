@@ -148,10 +148,10 @@ Non-flexible, complicates usage, composition, testing.</li>
 <h3 id="context-is-mostly-an-inefficient-linked-list">Context is mostly an inefficient linked list</h3>
 
 <p>The way <code>WithCancel</code>, <code>WithDeadline</code>, etc. constructors from the <code>&quot;context&quot;</code> package work is they
-create a linked list. Among other things, this requires creating a
-<a href="https://golang.org/src/context/context.go#L261">goroutine</a> for (almost) each <code>WithCancel</code>, which
-propagates cancelation signals from the previous context to the new one. Of course, if the context
-is never canceled, this goroutine is leaked.</p>
+create a linked list. Among other things, this sometimes requires creating a
+<a href="https://golang.org/src/context/context.go#L261">goroutine</a> for <code>WithCancel</code>, which propagates
+cancelation signals from the previous context to the new one. Of course, if the context is never
+canceled, this goroutine is leaked.</p>
 
 <p>The <code>WithValue</code> constructor takes a context and returns a context which propagates the previous
 context but also contains a value under the specified key. This is, obviously, achieved by creating
@@ -227,10 +227,9 @@ point out the problem.</p>
 
 <h2 id="conclusion">Conclusion</h2>
 
-<p>This post was trying to point out a problem in the Go language. It&rsquo;s not an experience report, but
-it might be convincing enough. In short, cancelation is a problem in Go and the <code>&quot;context&quot;</code> package
-does not solve this problem very well. I can&rsquo;t think of any other solution that would solve this
-problem good except for a language change. That is up for Go 2.</p>
+<p>This post was trying to point out a problem in the Go language. In short, cancelation is a problem
+in Go and the <code>&quot;context&quot;</code> package does not solve this problem very well. I can&rsquo;t think of any other
+solution that would solve this problem good except for a language change. That is up for Go 2.</p>
 
 <p>Thanks for reading and I&rsquo;m looking forward to your feedback and <del>hate comments</del> objections ;).</p>
 
