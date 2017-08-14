@@ -176,8 +176,8 @@ func (sf SeqFunc) Next() (x float64, ok bool) {
 }
 </code></pre>
 
-<p>The <code>SeqFunc</code> is a function which satisfies the <code>Seq</code> interface by implementing the <code>Next</code> function
-returning the result of itself. This pattern is also used in the standard library with
+<p>The <code>SeqFunc</code> is a function type which satisfies the <code>Seq</code> interface by implementing the <code>Next</code>
+function returning the result of itself. This pattern is also used in the standard library with
 <a href="https://golang.org/pkg/net/http/#HandlerFunc"><code>http.HandlerFunc</code></a>.</p>
 
 <p>Let&rsquo;s start creating actual <code>Seq</code> implementations.</p>
