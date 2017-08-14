@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+  
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="author" content="">
+  <meta name="generator" content="Hugo 0.25.1" />
+  <title>How I built an audio library using the composite pattern and higher-order functions — faiface blog</title>
+
+  <meta name="description" content="">
+  <link rel="canonical" href="https://faiface.github.io/post/how-i-built-audio-lib-composite-pattern/">
+  <link href="" rel="alternate" type="application/rss+xml" title="faiface blog">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Code+Pro|Arvo:400,700">
+  <link rel="stylesheet" href="https://faiface.github.io/css/highlight.css">
+  <link rel="stylesheet" href="https://faiface.github.io/css/paperback.css">
+</head>
+
+
+  <body>
+    
+<script>
+(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+})(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+ga('create', 'UA-104415719-1', 'auto');
+ga('send', 'pageview');
+</script>
+
+
+    <div class="container">
+
+      <header>
+  <h1>How I built an audio library using the composite pattern and higher-order functions</h1>
+
+  
+  <time datetime="2017-08-13 16:21:12 &#43;0200 CEST">2017/08/13</time>
+  
+
+  
+</header>
+
+
+      <article>
+        
+
+<p>Some people say that Go can&rsquo;t express good abstractions. They mostly refer to the lack of generics.
+That&rsquo;s because in most object-oriented languages, people are used to creating abstractions around
+types. In Go, the right way is to create abstractions around behaviour using interfaces. When you
+follow this principle, you find that Go is very powerful at creating abstractions.</p>
+
+<p>In this post, I am going to explore a way of creating abstractions using the <em>&lsquo;good old composite
+pattern&rsquo;</em> from the book called &lsquo;Design patterns&rsquo;. Combined with higher-order functions, this pattern
+is not only powerful, but also convenient. I will</p>
+
+<ol>
+<li>Explain what the composite pattern is.</li>
+<li>Show how it can be combined with <em>higher-order functions</em> and closures.</li>
+<li>Present a way I used it to create an <strong>audio library</strong>.</li>
+</ol>
+
+<p><strong>Why the hell are you going to talk about design patterns? Those are for Java and Java is bad, we
+don&rsquo;t like design patterns in Go!</strong></p>
+
+<p>Uhm, well, you&rsquo;re right, we usually don&rsquo;t like design patterns in Go. But, bear with me, this is
+only going to be about one of them and it&rsquo;s gonna be interesting, I promise.</p>
+
+<h2 id="first-example-arithmetic-expressions">First example: arithmetic expressions</h2>
+
+<p>The composite pattern revolves around a single idea:</p>
+
+<p><strong><em>Everything satisfies a single interface and complex things are composed from simple ones.</em></strong></p>
+
+<p>It might not be entirely clear what this means, so let&rsquo;s dive directly into the code.</p>
+
+<p>In this first example, we&rsquo;ll be creating a system to create and evaluate arithmetic expressions. We
+need to start by creating the <em>one single interface</em>. It&rsquo;s clear that an interface representing an
+<em>expression</em> will be the right choice. This way, we&rsquo;ll be able to create simple expressions and
+create more complicated expressions by composing simpler ones using various operators.</p>
+
+<p>To make things even simpler, we won&rsquo;t even define an interface. A function type is sufficient here.</p>
+
+<pre><code class="language-go">type Expr func() float64
+</code></pre>
+
+<p>So, an expression is a function which evaluates to <code>float64</code>. An interface equivalent would be an
+interface with a single method, say <code>Eval</code>.</p>
+
+<p>The most simple expression is one that returns a constant. Let&rsquo;s call it <code>Const</code>. Here&rsquo;s the
+constructor.</p>
+
+<pre><code class="language-go">func Const(x float64) Expr {
+        return func() float64 {
+                return x
+        }
+}
+</code></pre>
+
+<p>Now we can define a composite constructor, say a one which sums other expressions. It takes an
+aribirary number of other expressions and evaluates to their sum.</p>
+
+<pre><code class="language-go">func Sum(exs ...Expr) Expr {
+        return func() float64 {
+                sum := 0.0
+                for _, ex := range exs {
+                        sum += ex()
+                }
+                return sum
+        }
+}
+</code></pre>
+
+<p>The expression returned from the <code>Sum</code> constructor simply adds the results of the other expressions
+together. Note, that we call <code>ex()</code> inside the loop, because the <code>Expr</code> type is a function and
+calling it yields the result.</p>
+
+<p>Now we have some material to start using our arithmetic expressions library.</p>
+
+<pre><code class="language-go">ex1 := Sum(Const(1), Const(2), Const(3))
+fmt.Println(ex1()) // prints 6
+
+ex2 := Sum(Const(1), Sum(Const(2), Const(3)))
+fmt.Println(ex2()) // prints 6 alike
+</code></pre>
+
+<p>We can create more expressions. <code>Ref</code> always returns the value of a variable it is pointing to.</p>
+
+<pre><code class="language-go">func Ref(x *float64) Expr {
+        return func() float64 {
+                return *x
+        }
+}
+</code></pre>
+
+<p>And now we can do funny things :)</p>
+
+<pre><code class="language-go">x := 1.0
+ex := Sum(Ref(&amp;x), Ref(&amp;x))
+
+x = ex() // x = 2
+x = ex() // x = 4
+x = ex() // x = 8
+x = ex() // x = 16
+</code></pre>
+
+<p>I think this is neat. This is just a little toy example, to give you the taste. Let&rsquo;s go ahead to
+another example. Still a toy one, but a little less toy one.</p>
+
+<h2 id="second-example-sequences">Second example: sequences</h2>
+
+<p>Now, we will use the composite pattern to assemble sequences of numbers. Finite or inifinite,
+doesn&rsquo;t matter.</p>
+
+<p>Once again, we need to start by creating the single interface. Obviously, this interface will
+represent a sequence. The interface will contain a single method called <code>Next</code>. This method returns
+the next element in the sequence and <code>true</code> or <code>false</code> depending on whether we already reached the
+end of the sequence.</p>
+
+<pre><code class="language-go">type Seq interface {
+        Next() (x float64, ok bool)
+}
+</code></pre>
+
+<p>We could use a function type again, but I decided to use a proper interface, for clarity.
+Nonetheless, we can create a helper function type, which will simplify creating instances of the
+interface.</p>
+
+<pre><code class="language-go">type SeqFunc func() (x float64, ok bool)
+
+func (sf SeqFunc) Next() (x float64, ok bool) {
+        return sf()
+}
+</code></pre>
+
+<p>The <code>SeqFunc</code> is a function which satisfies the <code>Seq</code> interface by implementing the <code>Next</code> function
+returning the result of itself. This pattern is also used in the standard library with
+<a href="https://golang.org/pkg/net/http/#HandlerFunc"><code>http.HandlerFunc</code></a>.</p>
+
+<p>Let&rsquo;s start creating actual <code>Seq</code> implementations.</p>
+
+<p>The simplest one is a sequence created from a slice. We&rsquo;ll call it <code>Mk</code> (make a sequence).</p>
+
+<pre><code class="language-go">func Mk(vals ...float64) Seq {
+        i := 0
+        return SeqFunc(func() (x float64, ok bool) {
+                if i &gt;= len(vals) {
+                        return 0, false
+                }
+                x = vals[i]
+                i++
+                return x, true
+        })
+}
+</code></pre>
+
+<p><code>Mk</code> sequence tracks the current index in the slice it was created from. Every time <code>Next</code> is
+called, the current value is returned and the index is incremented. When we reach the end of the
+slice, we simply return <code>0, false</code>.</p>
+
+<p>A complement function to <code>Mk</code> is <code>Collect</code>, which takes a <code>Seq</code> and collects it into a slice of
+numbers. This is obviously only applicable to finite sequences.</p>
+
+<pre><code class="language-go">func Collect(s Seq) []float64 {
+        var vals []float64
+        for {
+                x, ok := s.Next()
+                if !ok {
+                        break
+                }
+                vals = append(vals, x)
+        }
+        return vals
+}
+</code></pre>
+
+<p>Now, we can turn a slice into a sequence and back again, very useful.</p>
+
+<pre><code class="language-go">fmt.Println(Collect(Mk(1, 2, 3))) // prints [1 2 3]
+</code></pre>
+
+<p>We can create an infinite sequence of natural numbers.</p>
+
+<pre><code class="language-go">func Naturals() Seq {
+        n := 0.0
+        return SeqFunc(func() (x float64, ok bool) {
+                n++
+                return n, true
+        })
+}
+</code></pre>
+
+<p>And we can create a composite which takes <code>n</code> first elements out of any sequence.</p>
+
+<pre><code class="language-go">func Take(n int, s Seq) Seq {
+        return SeqFunc(func() (x float64, ok bool) {
+                if n &lt;= 0 {
+                        return 0, false
+                }
+                n--
+                return s.Next()
+        })
+}
+</code></pre>
+
+<p>Now, we can generate <code>n</code> first natural numbers.</p>
+
+<pre><code class="language-go">fmt.Println(Collect(Take(10, Naturals())))
+// [1 2 3 4 5 6 7 8 9 10]
+</code></pre>
+
+<p>This is starting to feel like functional programming. And rightfully so. We are doing</p>
+
+<ol>
+<li>Composition</li>
+<li>Lazy evaluation and infinite sequences</li>
+<li>Too long expressions :)</li>
+</ol>
+
+<p>The first point is the most important. With the composite pattern, we&rsquo;ve been able to create
+building blocks and compose more complicated things out of them. Don&rsquo;t believe me? Let&rsquo;s create a
+<code>Split</code> function, which takes a sequence and splits it into two sequences at a given index. <em>Just
+watch!</em></p>
+
+<pre><code class="language-go">func Split(n int, s Seq) (l, r Seq) {
+        return Mk(Collect(Take(n, s))...), s
+}
+</code></pre>
+
+<p>That was easy! Make sure to understand it, should be fairly obvious.</p>
+
+<p>To make the <code>Split</code> function, we didn&rsquo;t have to write almost any code. All of the required pieces
+were already present, we just needed to compose them in the right way. Hence, the composite pattern.</p>
+
+<p>Let&rsquo;s see how our <code>Split</code> function behaves.</p>
+
+<pre><code class="language-go">s := Take(7, Naturals())
+l, r := Split(4, s)
+fmt.Println(Collect(l), Collect(r))
+// [1 2 3 4] [5 6 7]
+</code></pre>
+
+<p>Take seven naturals, split them at four and print the results. Simple, right?</p>
+
+<p>When using the composite pattern, you&rsquo;ll find it very easy to follow the DRY principle and you
+usually end up writing much less code than otherwise.</p>
+
+<p><strong>Excercise:</strong> Create a <code>Dup</code> (duplicate) function, which takes a <code>Seq</code> and returns two <code>Seq</code>s which
+are both identical (in terms of elements) to the original <code>Seq</code>. It should work for infinite
+sequences too.</p>
+
+<h2 id="real-thing-beep-audio-library">Real thing: Beep audio library</h2>
+
+<p>Now that you&rsquo;ve certainly got a hang of the composite pattern, let&rsquo;s see how it can be used in a
+real library. The library I&rsquo;m talking about is an audio library I&rsquo;ve been working on for the past
+month. It&rsquo;s called <a href="https://github.com/faiface/beep">Beep</a>, which is a name chosen from a <a href="https://www.reddit.com/r/golang/comments/6n1plq/choose_the_name_for_a_new_audio_library_in_go/">poll on
+Reddit</a>.</p>
+
+<p>First things first, the library is by no means only my work. The playback heavily depends on Hajime
+Hoshi&rsquo;s <a href="https://godoc.org/github.com/hajimehoshi/oto">Oto</a> library and MP3 decoding depends on his
+<a href="https://github.com/hajimehoshi/go-mp3">go-mp3</a> package.</p>
+
+<p>The library is built around the composite pattern, for a great good. Let&rsquo;s take a look!</p>
+
+<h3 id="the-streamer-interface">The <code>Streamer</code> interface</h3>
+
+<p>As usual, when designing around the composite pattern, the first thing is the single interface. In
+case of Beep, this single interface is called <code>Streamer</code>. It&rsquo;s very similar to the former one,
+<code>Seq</code>.</p>
+
+<p>Audio is composed of elements called
+<a href="https://en.wikipedia.org/wiki/Sampling_(signal_processing)"><em>samples</em></a>. A sample is a number on the
+timeline in the interval [-1, +1] which specifies the pressure of the air at that moment. A
+<code>Streamer</code> is pretty much a sequence of samples. However, getting the samples one by one as with
+<code>Seq</code> would be way too inefficient. That&rsquo;s why the <code>Streamer</code> interface is designed to stream a
+number of samples at once.</p>
+
+<p>Here&rsquo;s how it looks like.</p>
+
+<pre><code class="language-go">type Streamer interface {
+        Stream(samples [][2]float64) (n int, ok bool)
+        Err() error
+}
+</code></pre>
+
+<p>The <code>Stream</code> method is given a slice of samples (there are two numbers per sample, the left and the
+right channel), fills it with samples and advances the internal state (if any). It returns the
+number of samples it streamed (filled in the slice). If the <code>Streamer</code> already reached it&rsquo;s end and
+has no samples to stream, it returns <code>false</code>. Otherwise, it returns <code>true</code>. The complete description
+can be found in the <a href="https://godoc.org/github.com/faiface/beep#Streamer">docs</a>.</p>
+
+<p>The <code>Err</code> method is for handling errors, such as file and network errors. Errors are kept out of the
+<code>Stream</code> method to simplify composition.</p>
+
+<p>Similar to <code>Seq</code>, there is a helper function type which enables easy creation of <code>Streamer</code>s that
+can&rsquo;t error.</p>
+
+<pre><code class="language-go">type StreamerFunc func(samples [][2]float64) (n int, ok bool)
+</code></pre>
+
+<h3 id="loading-audio-files">Loading audio files</h3>
+
+<p>Enough talking, let&rsquo;s get to the code.</p>
+
+<p>The simplest way to create a streamer is from an audio file. Beep currently supports
+<a href="https://godoc.org/github.com/faiface/beep/wav">WAV</a> and
+<a href="https://godoc.org/github.com/faiface/beep/mp3">MP3</a> formats. We&rsquo;ll be ignoring errors here, for
+simplicity, don&rsquo;t do that in real code.</p>
+
+<pre><code class="language-go">// import &quot;github.com/faiface/beep/mp3&quot;
+file, _ := os.Open(&quot;song.mp3&quot;)
+streamer, format, _ := mp3.Decode(file)
+</code></pre>
+
+<p>This creates a streamer which streams the song directly from the file without loading it in the
+memory first. The song doesn&rsquo;t even have to fit in the memory, since it&rsquo;s never fully there.</p>
+
+<p>The <code>format</code> return value tells us some information about the source file, such as the <a href="https://en.wikipedia.org/wiki/Sampling_(signal_processing)#Sampling_rate">sample
+rate</a> (number of samples
+per second) and the number of channels.</p>
+
+<p>Let&rsquo;s go a head and convert the MP3 file into a WAV file. We&rsquo;ve already created a streamer for the
+MP3 file, so all we need to do is to encode this streamer into a WAV file.</p>
+
+<pre><code class="language-go">// import &quot;github.com/faiface/beep/wav&quot;
+output, _ := os.Create(&quot;song.wav&quot;)
+wav.Encode(output, streamer, format)
+output.Close()
+</code></pre>
+
+<p>This is quite spectacular. <em>There is no MP3 to WAV conversion functionality in the library
+anywhere.</em> What is there is an MP3 to <code>Streamer</code> functionality and <code>Streamer</code> to WAV functionality.
+Composing these two things yields an MP3 to WAV converter. Furthermore, this converter <strong>operates
+directly on the files, doesn&rsquo;t load the files into the memory</strong>. You can convert gigabytes of audio
+data without ruining your RAM. <strong>All of this simply follows from the chosen composite interface and
+its composition.</strong></p>
+
+<h2 id="playing-through-the-speaker">Playing through the <code>speaker</code></h2>
+
+<p>Loading and saving audio files is interesting, but playing is the key. Beep has an extension package
+<code>&quot;github.com/faiface/beep/speaker&quot;</code>, which allows playback of arbitrary streamers.</p>
+
+<p>First, we need to initialize the speaker, which involves setting the speaker&rsquo;s sample rate and
+buffer size. This is done using the <code>Init</code> function.</p>
+
+<pre><code class="language-go">// import (
+//         &quot;github.com/faiface/beep&quot;
+//         &quot;github.com/faiface/beep/speaker&quot;
+// )
+sr := beep.SampleRate(48000)
+speaker.Init(sr, sr.N(time.Second/10))
+</code></pre>
+
+<p>The type <a href="https://godoc.org/github.com/faiface/beep#SampleRate"><code>beep.SampleRate</code></a> is an <code>int</code> with
+two methods. First, <code>sr.D</code>, converts number of samples to their duration in <code>time.Duration</code>. The
+second, <code>sr.N</code>, does the opposite. Since <code>speaker.Init</code> takes the number of samples in the buffer,
+we use the <code>sr.N</code> method to calculate the number of samples in 1/10s. Smaller buffer size means more
+responsive playback (lower latency). Larger buffer size means more reliable playback.</p>
+
+<p>To play a streamer, we simply call the <code>speaker.Play</code> function.</p>
+
+<pre><code class="language-go">speaker.Play(streamer)
+</code></pre>
+
+<p>This starts the playback and returns immediately.</p>
+
+<p>Following this, here&rsquo;s how to play an MP3 file.</p>
+
+<pre><code class="language-go">file, _ := os.Open(&quot;song.mp3&quot;)
+streamer, format, _ := mp3.Decode(file)
+
+sr := format.SampleRate
+speaker.Init(sr, sr.N(time.Second/10))
+speaker.Play(streamer)
+</code></pre>
+
+<p>Nice! There is a problem with this code, though. This program immediately exists and we won&rsquo;t hear
+anything. The solution would be to either wait infinitely using <code>select {}</code>, or somehow wait until
+the song ends. We&rsquo;ll learn about that in the following section.</p>
+
+<h2 id="composing-streamer-s">Composing <code>Streamer</code>s</h2>
+
+<p>Beep provides a number of built-in streamer compositors. Let&rsquo;s take a look at a few of them.</p>
+
+<p>One of the most important ones is <code>Seq</code>. Don&rsquo;t get confused, this has nothing to do with the
+sequence composite interface above. It takes some streamers and streams them one after another.
+Here&rsquo;s how it&rsquo;s implemented.</p>
+
+<pre><code class="language-go">func Seq(s ...Streamer) Streamer {
+        i := 0
+        return StreamerFunc(func(samples [][2]float64) (n int, ok bool) {
+                for i &lt; len(s) &amp;&amp; len(samples) &gt; 0 {
+                        sn, sok := s[i].Stream(samples)
+                        samples = samples[sn:]
+                        n, ok = n+sn, ok || sok
+                        if !sok {
+                                i++
+                        }
+                }
+                return n, ok
+        })
+}
+</code></pre>
+
+<p>Pretty simple. I&rsquo;m not going to explain it in detail, you can do that yourself if you want. What&rsquo;s
+more important is how we can use this compositor.</p>
+
+<pre><code class="language-go">speaker.Play(beep.Seq(streamer1, streamer2))
+</code></pre>
+
+<p>This code plays two different streamers one after another. <em>Note, that a streamer is not immutable
+and gets drained after playing. Therefore <code>beep.Seq(streamer1, streamer1)</code> will not play the same
+streamer twice, because on the second time it will already be drained.</em></p>
+
+<p>Another useful streamer is <code>Callback</code>. This is a streamer which streams no audio, but instead calls
+a function when it starts streaming (and ends streaming immediately).</p>
+
+<p>With this knowledge, we are ready to play a song until it ends.</p>
+
+<pre><code class="language-go">done := make(chan struct{})
+speaker.Play(beep.Seq(
+        streamer,
+        beep.Callback(func() {
+                close(done)
+        })
+))
+&lt;-done
+</code></pre>
+
+<p>We create a channel which will signal the end of the song. Then, we play a sequence of the song and
+a callback. Therefore, when the song finishes, the callback gets called. The callback closes the
+signaling channel and causes the receive operation proceed. Neat.</p>
+
+<p><strong>What if we want to play a streamer which streams at a different sample rate than the speaker?</strong> If
+you&rsquo;d just play it as it is, the playback would be either too fast or too slow. Beep provides a
+<code>Resample</code> compositor exactly for this.</p>
+
+<p>Let&rsquo;s say we have a streamer which streams at the sample rate of <code>44100</code>, but we initialized the
+speaker to the sample rate of <code>48000</code>. Here&rsquo;s how we do it.</p>
+
+<pre><code class="language-go">speaker.Play(beep.Resample(4, 44100, 48000, streamer))
+</code></pre>
+
+<p>The first argument is the resampling quality. Read more about it in the
+<a href="https://godoc.org/github.com/faiface/beep#Resample">docs</a>.</p>
+
+<p>Resampling can also be used to speed up or slow down an audio.</p>
+
+<pre><code class="language-go">twiceAsFast := beep.ResampleRatio(4, 2, streamer)
+speaker.Play(twiceAsFast)
+</code></pre>
+
+<p>Beep provides a variety of other compositor. Let&rsquo;s list a few.</p>
+
+<pre><code class="language-go">playTogether := beep.Mix(streamer1, streamer2)
+
+firstFiveSeconds := beep.Take(sr.N(5*time.Second), streamer3)
+
+ctrl := beep.Ctrl{Streamer: streamer4}
+ctrl.Paused = true
+
+minuteOfSilence := beep.Silence(sr.N(time.Minute))
+
+louder := effects.Gain{
+        Streamer: streamer5,
+        Gain:     2,
+}
+
+toTheLeft := effects.Pan{
+        Streamer: streamer6,
+        Pan:      -1,
+}
+</code></pre>
+
+<p>Of course, if the built-in compositors and streamers are not enugh, <strong>you can easily create your own
+ones.</strong> All you need to do is to implement a <code>Streamer</code>. For example, here&rsquo;s an infinite sine wave
+streamer. Of course, you can use <code>beep.Take</code> on it to turn it into a finite streamer.</p>
+
+<pre><code class="language-go">func SineWave(sr beep.SampleRate, freq float64) beep.Streamer {
+        t := 0.0
+        return beep.StreamerFunc(func(samples [][2]float64) (n int, ok bool) {
+                for i := range samples {
+                        y := math.Sin(math.Pi * freq * t)
+                        samples[i][0] = y
+                        samples[i][1] = y
+                        t += sr.D(1).Seconds()
+                }
+                return len(samples), true
+        })
+}
+</code></pre>
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>This article showed what the composite pattern is, how it can be combined with higher-order
+functions and closures for convenience and how you can use it to create <strong>flexible and reusable
+code.</strong></p>
+
+<p>Of course, the composite pattern is not a fit for everything. But when it is, <strong>please consider
+using it</strong>, as it will greatly improve the quality and DRYness of your code.</p>
+
+<p>I think it&rsquo;s a great fit for Go and an idiomatic solution to many abstraction problems. <strong>Go has
+interfaces and higher-order functions, so use them!</strong></p>
+
+<p>Currently, I&rsquo;m figuring out how to incorporate the composite pattern into my
+<a href="https://github.com/faiface/pixel">Pixel</a> game library. If you have any ideas on that, please share
+;)</p>
+
+<p>Michal Štrba</p>
+
+
+        <div id="disqus_thread"></div>
+<script>
+    var disqus_config = function () {
+    
+    
+    
+    };
+    (function() {
+        if (["localhost", "127.0.0.1"].indexOf(window.location.hostname) != -1) {
+            document.getElementById('disqus_thread').innerHTML = 'Disqus comments not available by default when the website is previewed locally.';
+            return;
+        }
+        var d = document, s = d.createElement('script'); s.async = true;
+        s.src = '//' + "faiface-github-io" + '.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', +new Date());
+        (d.head || d.body).appendChild(s);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+      </article>
+
+      <nav class="site-nav">
+  <a href="https://faiface.github.io/">Home</a>
+  <a href="https://faiface.github.io/post/">All posts</a>
+
+  
+
+  
+
+</nav>
+
+
+      <footer class="site-footer">
+  <span class="owner">©2017 </span>
+
+  
+</footer>
+
+
+    </div>
+
+  
+<script src="https://faiface.github.io/js/highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+  </body>
+</html>

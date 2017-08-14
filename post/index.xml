@@ -6,10 +6,20 @@
     <description>Recent content in Posts on faiface blog</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Sun, 06 Aug 2017 18:58:25 +0200</lastBuildDate>
+    <lastBuildDate>Sun, 13 Aug 2017 16:21:12 +0200</lastBuildDate>
     
 	<atom:link href="https://faiface.github.io/post/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>How I built an audio library using the composite pattern and higher-order functions</title>
+      <link>https://faiface.github.io/post/how-i-built-audio-lib-composite-pattern/</link>
+      <pubDate>Sun, 13 Aug 2017 16:21:12 +0200</pubDate>
+      
+      <guid>https://faiface.github.io/post/how-i-built-audio-lib-composite-pattern/</guid>
+      <description>Some people say that Go can&amp;rsquo;t express good abstractions. They mostly refer to the lack of generics. That&amp;rsquo;s because in most object-oriented languages, people are used to creating abstractions around types. In Go, the right way is to create abstractions around behaviour using interfaces. When you follow this principle, you find that Go is very powerful at creating abstractions.
+In this post, I am going to explore a way of creating abstractions using the &amp;lsquo;good old composite pattern&amp;rsquo; from the book called &amp;lsquo;Design patterns&amp;rsquo;.</description>
+    </item>
     
     <item>
       <title>Context should go away for Go 2</title>
