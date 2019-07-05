@@ -152,7 +152,7 @@ lang: Go
 
 	prefix := name + &quot;:&quot;
 	if !strings.HasPrefix(s.Text(), prefix) {
-		return &quot;&quot;, fmt.Errorf(&quot;expected \&quot;%s\&quot;&quot;, prefix)
+		return &quot;&quot;, fmt.Errorf(&quot;expected %q&quot;, prefix)
 	}
 
 	return strings.TrimPrefix(s.Text(), prefix), nil
@@ -305,7 +305,7 @@ line := 1
 
 	prefix := name + &quot;:&quot;
 	if !strings.HasPrefix(s.Text(), prefix) {
-		return &quot;&quot;, fmt.Errorf(&quot;expected \&quot;%s\&quot;&quot;, prefix)
+		return &quot;&quot;, fmt.Errorf(&quot;expected %q&quot;, prefix)
 	}
 
 	*line++
@@ -448,7 +448,7 @@ func parseField(s *bufio.Scanner, line *int, name string) (value string, err err
 
 	prefix := name + &quot;:&quot;
 	if !strings.HasPrefix(s.Text(), prefix) {
-		return &quot;&quot;, fmt.Errorf(&quot;expected \&quot;%s\&quot;&quot;, prefix)
+		return &quot;&quot;, fmt.Errorf(&quot;expected %q&quot;, prefix)
 	}
 
 	*line++
