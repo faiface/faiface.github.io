@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+  
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="author" content="">
+  <meta name="generator" content="Hugo 0.37.1" />
+  <title>How to use &#39;try&#39; — faiface blog</title>
+
+  <meta name="description" content="">
+  <link rel="canonical" href="https://faiface.github.io/post/how-to-use-try/">
+  <link href="" rel="alternate" type="application/rss+xml" title="faiface blog">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Code+Pro|Arvo:400,700">
+  <link rel="stylesheet" href="https://faiface.github.io/css/highlight.css">
+  <link rel="stylesheet" href="https://faiface.github.io/css/paperback.css">
+</head>
+
+
+  <body>
+    
+    <div class="container">
+
+      <header>
+  <h1>How to use &#39;try&#39;</h1>
+
+  
+  <time datetime="2019-07-04 19:28:03 &#43;0200 CEST">2019/07/04</time>
+  
+
+  
+</header>
+
+
+      <article>
+        <p>The recent <a href="https://github.com/golang/go/issues/32437"><code>try</code> proposal</a> by Robert Griesemer sparked a lot of controversy. While the proposal is a subject to reasonable criticism, I didn&rsquo;t feel like everyone was always on the same page.</p>
+
+<p>This post isn&rsquo;t pro-try or anti-try. It just shows how <code>try</code> could be used so that you can form a more informed opinion.</p>
+
+<p>Suppose we are grad students of social sciences and need to come up with idea for a poll. Since we are programmers, too, we&rsquo;ve come up with this poll: find correlations between person&rsquo;s gender, favorite OS, and favorite programming language.</p>
+
+<p>This is, of course, a contrived example. The goal of this post isn&rsquo;t to solve a real-world scenario, but to show multiple aspects of <code>try</code> in a small program.</p>
+
+<p>The data from the poll will look like this:</p>
+
+<pre><code class="language-go">name: Boris Bateman
+gender: man
+os: Windows
+lang: PHP
+
+name: Darin May
+gender: woman
+os: OSX
+lang: JavaScript
+
+name: Shea Wilks
+gender: nonbinary
+os: Linux
+lang: Emacs LISP
+
+name: Robert Griesemer
+gender: man
+os: Linux
+lang: Go
+</code></pre>
+
+<p>Each respondent has four required fields: <strong>name</strong>, <strong>gender</strong>, <strong>os</strong>, and <strong>lang</strong>. There is an obligatory empty line between respondents.</p>
+
+<p>We want to parse this file into a slice of <code>Respondent</code> structs, defined like this:</p>
+
+<pre><code class="language-go">type Respondent struct {
+	Name   string
+	Gender string
+	OS     string
+	Lang   string
+}
+</code></pre>
+
+<p>Let&rsquo;s get on to it, step by step!</p>
+
+<pre><code class="language-go">func parseRespondents(path string) (resps []Respondent, err error) {
+	return nil, nil
+}
+</code></pre>
+
+<p>I know, I could have used an <code>io.Reader</code>. But, for the purposes of demonstrating <code>try</code>, let&rsquo;s keep it this way.</p>
+
+<p>First, we&rsquo;re gonna use a (not yet existing) function <code>fmt.HandleErrorf</code>:</p>
+
+<pre><code class="language-go">func parseRespondents(path string) (resps []Respondent, err error) {
+	defer fmt.HandleErrorf(&amp;err, &quot;parse %s&quot;, path)
+	return nil, nil
+}
+</code></pre>
+
+<p>It adds context to the returned error, if it&rsquo;s not <code>nil</code>. It&rsquo;s defined like this:</p>
+
+<pre><code class="language-go">func HandleErrorf(err *error, format string, args ...interface{}) {
+	if *err != nil {
+		*err = errors.Wrapf(*err, format, args...)
+	}
+}
+</code></pre>
+
+<p>Every error returned from <code>parseRespondents(&quot;respondents.txt&quot;)</code> will now be prefixed with <code>parse respondents.txt:</code>.</p>
+
+<pre><code class="language-go">func parseRespondents(path string) (resps []Respondent, err error) {
+	defer fmt.HandleErrorf(&amp;err, &quot;parse %s&quot;, path)
+
+	f := try(os.Open(path))
+	defer f.Close()
+
+	return nil, nil
+}
+</code></pre>
+
+<p>Normally, <code>os.Open(path)</code> returns two values: the file and an error. By wrapping it in <code>try</code>, we drop the error from the return values and get an automatic return if the error wasn&rsquo;t <code>nil</code>.</p>
+
+<p>What kind of error do we get now if the file doesn&rsquo;t exist?</p>
+
+<pre><code class="language-go">parse respondnts.txt: open respondnts.txt: no such file or directory
+</code></pre>
+
+<p>The error has all the context it needs, because <code>os.Open</code> adds some context on its own.</p>
+
+<pre><code class="language-go">func parseRespondents(path string) (resps []Respondent, err error) {
+	defer fmt.HandleErrorf(&amp;err, &quot;parse %s&quot;, path)
+
+	file := try(os.Open(path))
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+
+	for {
+		//TODO: parse fields
+	}
+
+	return resps, nil
+}
+</code></pre>
+
+<p>Now it&rsquo;s time to create a helper function for parsing the individual fields.</p>
+
+<pre><code class="language-go">func parseField(scanner *bufio.Scanner, name string) (value string, err error) {
+	defer fmt.HandleErrorf(&amp;err, &quot;parse field %s&quot;, name)
+
+	if !s.Scan() {
+		return &quot;&quot;, io.EOF
+	}
+
+	prefix := name + &quot;:&quot;
+	if !strings.HasPrefix(s.Text(), prefix) {
+		return &quot;&quot;, fmt.Errorf(&quot;expected \&quot;%s\&quot;&quot;, prefix)
+	}
+
+	return strings.TrimPrefix(s.Text(), prefix), nil
+}
+</code></pre>
+
+<p>Once again, we use <code>fmt.HandleErrorf</code> to add a context to all errors returned from this function. This time, we tell which field we were trying to parse.</p>
+
+<p>We try scanning the line. If successful, we try and trim the required prefix (e.g. <code>&quot;name:&quot;</code>, <code>&quot;gender:&quot;</code>, &hellip;) from the beginning of the line and return the resulting value of the field.</p>
+
+<p>Let&rsquo;s now use this helper function in <code>parseRespondents</code>.</p>
+
+<p>First, we need to try and parse the first field of a respondent: the name. If we reached the end of file, that&rsquo;s fine, we need to stop parsing. Otherwise, we need to report the error. This is not a situation for <code>try</code>, because we need to deal with the error in a more complex way than just returning it.</p>
+
+<pre><code class="language-go">for {
+	name, err := parseField(scanner, &quot;name&quot;)
+	if errors.Is(err, io.EOF) { // can't use ==, because the error is wrapped
+		break
+	}
+	if err != nil {
+		return resps, err
+	}
+
+	//TODO: parse the remaining fields
+}
+</code></pre>
+
+<p>Once we parsed the name, we need to parse all the remaining fields. These are required to be there, so we can use <code>try</code> in this situation:</p>
+
+<pre><code class="language-go">for {
+	name, err := parseField(scanner, &quot;name&quot;)
+	if errors.Is(err, io.EOF) { // can't use ==, because the error is wrapped
+		break
+	}
+	if err != nil {
+		return resps, err
+	}
+
+	resp := Respondent{
+		Name:   name,
+		Gender: try(parseField(scanner, &quot;gender&quot;)),
+		OS:     try(parseField(scanner, &quot;os&quot;)),
+		Lang:   try(parseField(scanner, &quot;lang&quot;)),
+	}
+
+	resps = append(resps, resp)
+}
+</code></pre>
+
+<p>Without <code>try</code>, we would have to manually check the error for each of the fields, resulting in many lines of code. Here, we can simply use the value returned from the <code>try</code> directly, <code>try</code> will take care of returning the possible error.</p>
+
+<p>All that&rsquo;s remaining is the obligatory empty line:</p>
+
+<pre><code class="language-go">for {
+	name, err := parseField(scanner, &quot;name&quot;)
+	if errors.Is(err, io.EOF) { // can't use ==, because the error is wrapped
+		break
+	}
+	if err != nil {
+		return resps, err
+	}
+
+	resp := Respondent{
+		Name:   name,
+		Gender: try(parseField(scanner, &quot;gender&quot;)),
+		OS:     try(parseField(scanner, &quot;os&quot;)),
+		Lang:   try(parseField(scanner, &quot;lang&quot;)),
+	}
+
+	resps = append(resps, resp)
+
+	if !s.Scan() {
+		break
+	}
+	if s.Text() != &quot;&quot; {
+		return resps, errors.New(&quot;expected empty line&quot;)
+	}
+}
+</code></pre>
+
+<p>And here&rsquo;s the whole function:</p>
+
+<pre><code class="language-go">func parseRespondents(path string) (resps []Respondent, err error) {
+	defer fmt.HandleErrorf(&amp;err, &quot;parse %s&quot;, path)
+
+	f := try(os.Open(path))
+	defer f.Close()
+
+	s := bufio.NewScanner(f)
+
+	for {
+		name, err := parseField(s, &quot;name&quot;)
+		if errors.Is(err, io.EOF) {
+			break
+		}
+		if err != nil {
+			return resps, err
+		}
+
+		resp := Respondent{
+			Name:   name,
+			Gender: try(parseField(s, &quot;gender&quot;)),
+			OS:     try(parseField(s, &quot;os&quot;)),
+			Lang:   try(parseField(s, &quot;lang&quot;)),
+		}
+
+		resps = append(resps, resp)
+
+		if !s.Scan() {
+			break
+		}
+		if s.Text() != &quot;&quot; {
+			return resps, errors.New(&quot;expected empty line&quot;)
+		}
+	}
+
+	return resps, nil
+}
+</code></pre>
+
+<p>What do the error messages look like? Here are some of them:</p>
+
+<pre><code class="language-go">parse respondents.txt: parse field gender: expected &quot;gender:&quot;
+parse respondents.txt: expected empty line
+parse respondents.txt: parse field lang: EOF
+</code></pre>
+
+<p>Not that bad. One thing that&rsquo;s definitely missing is <strong>line numbers</strong>. Could we add them?</p>
+
+<p>Let&rsquo;s add a line counter variable:</p>
+
+<pre><code class="language-go">defer fmt.HandleErrorf(&amp;err, &quot;parse %s&quot;, path)
+
+f := try(os.Open(path))
+defer f.Close()
+
+s := bufio.NewScanner(f)
+
+line := 1
+</code></pre>
+
+<p>We need to increment it each time we read a line, so let&rsquo;s change the <code>parseField</code> function to do that:</p>
+
+<pre><code class="language-go">func parseField(s *bufio.Scanner, line *int, name string) (value string, err error) {
+	defer fmt.HandleErrorf(&amp;err, &quot;scan field '%s'&quot;, name)
+
+	if !s.Scan() {
+		return &quot;&quot;, io.EOF
+	}
+
+	prefix := name + &quot;:&quot;
+	if !strings.HasPrefix(s.Text(), prefix) {
+		return &quot;&quot;, fmt.Errorf(&quot;expected \&quot;%s\&quot;&quot;, prefix)
+	}
+
+	*line++
+	return strings.TrimPrefix(s.Text(), prefix), nil
+}
+</code></pre>
+
+<p>And modify all its usages:</p>
+
+<pre><code class="language-go">name, err := parseField(s, &amp;line, &quot;name&quot;)
+if errors.Is(err, io.EOF) {
+	break
+}
+if err != nil {
+	return resps, err
+}
+
+resp := Respondent{
+	Name:   name,
+	Gender: try(parseField(s, &amp;line, &quot;gender&quot;)),
+	OS:     try(parseField(s, &amp;line, &quot;os&quot;)),
+	Lang:   try(parseField(s, &amp;line, &quot;lang&quot;)),
+}
+</code></pre>
+
+<p>We also need to increment the counter when scanning the empty line:</p>
+
+<pre><code class="language-go">if !s.Scan() {
+	break
+}
+if s.Text() != &quot;&quot; {
+	return resps, errors.New(&quot;expected empty line&quot;)
+}
+line++
+</code></pre>
+
+<p>And now, let&rsquo;s use <code>fmt.HandleErrorf</code> to add the line to the error. How do we do that?</p>
+
+<p>This <strong>won&rsquo;t</strong> work:</p>
+
+<pre><code class="language-go">line := 1
+defer fmt.HandleErrorf(&amp;err, &quot;line %d&quot;, line)
+</code></pre>
+
+<p>This would always add <code>line 1</code> because the arguments to a deferred function are evaluated immediately.</p>
+
+<p>This also wouldn&rsquo;t work:</p>
+
+<pre><code class="language-go">line := 1
+defer fmt.HandleErrorf(&amp;err, &quot;line %d&quot;, &amp;line)
+</code></pre>
+
+<p>Instead of adding a line number, this would will the address of the <code>line</code> variable. Not what we wanted.</p>
+
+<p>This <strong>would</strong> be a solution:</p>
+
+<pre><code class="language-go">defer func() {
+	if err != nil {
+		err = errors.Wrapf(err, &quot;line %d&quot;, line)
+	}
+}()
+</code></pre>
+
+<p>And it&rsquo;s a perfectly fine solution.</p>
+
+<p>However, there is a <em>neater</em> (although a little hackier) solution. What if we made a type called <code>Ref</code> that would hold a pointer and would dereference it when required to print itself? Then we could do this:</p>
+
+<pre><code class="language-go">defer fmt.HandleErrorf(&amp;err, &quot;line %v&quot;, Ref{&amp;line})
+</code></pre>
+
+<p>We can make such a type quite easily. Here&rsquo;s what it looks like when we only care about pointers to <code>int</code>:</p>
+
+<pre><code class="language-go">type Ref struct {
+	Pointer *int
+}
+
+func (r Ref) String() string {
+	return fmt.Sprint(*r.Pointer)
+}
+</code></pre>
+
+<p>And here&rsquo;s a general solution for all types:</p>
+
+<pre><code class="language-go">type Ref struct {
+	Pointer interface{}
+}
+
+func (r Ref) String() string {
+	val := reflect.ValueOf(r.Pointer).Elem().Interface()
+	return fmt.Sprint(val)
+}
+</code></pre>
+
+<p>Not that hard.</p>
+
+<p>The errors are now more helpful:</p>
+
+<pre><code class="language-go">parse respondents.txt: line 12: parse field gender: expected &quot;gender:&quot;
+parse respondents.txt: line 9: expected empty line
+parse respondents.txt: line 4: parse field lang: EOF
+</code></pre>
+
+<p>Finally, here&rsquo;s the whole program:</p>
+
+<pre><code class="language-go">package main
+
+import (
+	&quot;bufio&quot;
+	&quot;fmt&quot;
+	&quot;io&quot;
+	&quot;os&quot;
+	&quot;reflect&quot;
+	&quot;strings&quot;
+
+	&quot;github.com/pkg/errors&quot;
+)
+
+type Ref struct {
+	Pointer interface{}
+}
+
+func (r Ref) String() string {
+	val := reflect.ValueOf(r.Pointer).Elem().Interface()
+	return fmt.Sprint(val)
+}
+
+type Respondent struct {
+	Name   string
+	Gender string
+	OS     string
+	Lang   string
+}
+
+func parseField(s *bufio.Scanner, line *int, name string) (value string, err error) {
+	defer fmt.HandleErrorf(&amp;err, &quot;scan field '%s'&quot;, name)
+
+	if !s.Scan() {
+		return &quot;&quot;, io.EOF
+	}
+
+	prefix := name + &quot;:&quot;
+	if !strings.HasPrefix(s.Text(), prefix) {
+		return &quot;&quot;, fmt.Errorf(&quot;expected \&quot;%s\&quot;&quot;, prefix)
+	}
+
+	*line++
+	return strings.TrimPrefix(s.Text(), prefix), nil
+}
+
+func parseRespondents(path string) (resps []Respondent, err error) {
+	defer fmt.HandleErrorf(&amp;err, &quot;parse %s&quot;, path)
+
+	f := try(os.Open(path))
+	defer f.Close()
+
+	s := bufio.NewScanner(f)
+
+	line := 1
+	defer fmt.HandleErrorf(&amp;err, &quot;line %v&quot;, Ref{&amp;line})
+
+	for {
+		name, err := parseField(s, &amp;line, &quot;name&quot;)
+		if errors.Is(err, io.EOF) {
+			break
+		}
+		if err != nil {
+			return resps, err
+		}
+
+		resp := Respondent{
+			Name:   name,
+			Gender: try(parseField(s, &amp;line, &quot;gender&quot;)),
+			OS:     try(parseField(s, &amp;line, &quot;os&quot;)),
+			Lang:   try(parseField(s, &amp;line, &quot;lang&quot;)),
+		}
+
+		resps = append(resps, resp)
+
+		if !s.Scan() {
+			break
+		}
+		if s.Text() != &quot;&quot; {
+			return resps, errors.New(&quot;expected empty line&quot;)
+		}
+		line++
+	}
+
+	return resps, nil
+}
+
+func main() {
+	resps, err := parseRespondents(&quot;respondents.txt&quot;)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	fmt.Println(resps)
+}
+</code></pre>
+
+<p>In summary, here are the main points of this post:</p>
+
+<ol>
+<li>Don&rsquo;t decorate what&rsquo;s already decorated (e.g. <code>os.Open</code>).</li>
+<li>Use <code>fmt.HandleErrorf</code> to add context.</li>
+<li>For more granularity, break it into more functions (e.g. <code>parseField</code>).</li>
+<li>There&rsquo;s no shame in falling back to <code>if err != nil</code> if appropriate.</li>
+</ol>
+
+<p>I hope I illustrated multiple aspects of the proposed <code>try</code> function and associated error handling constructs like <code>fmt.HandleErrorf</code> and showed cases where it&rsquo;s usable and also cases where it&rsquo;s not. Form your own opinion on it and feel free to speak about it in the comments here or on Reddit :). Thanks for reading!</p>
+
+
+        <div id="disqus_thread"></div>
+<script>
+    var disqus_config = function () {
+    
+    
+    
+    };
+    (function() {
+        if (["localhost", "127.0.0.1"].indexOf(window.location.hostname) != -1) {
+            document.getElementById('disqus_thread').innerHTML = 'Disqus comments not available by default when the website is previewed locally.';
+            return;
+        }
+        var d = document, s = d.createElement('script'); s.async = true;
+        s.src = '//' + "faiface-github-io" + '.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', +new Date());
+        (d.head || d.body).appendChild(s);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="https://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+      </article>
+
+      <nav class="site-nav">
+  <a href="https://faiface.github.io/">Home</a>
+  <a href="https://faiface.github.io/post/">All posts</a>
+
+  
+
+  
+
+</nav>
+
+
+      <footer class="site-footer">
+  <span class="owner">©2019 </span>
+
+  
+</footer>
+
+
+    </div>
+
+  
+<script src="https://faiface.github.io/js/highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+  </body>
+</html>

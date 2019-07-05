@@ -75,6 +75,7 @@ abbr {
 
 kbd, code, pre {
   font-family: "Source Code Pro", monospace;
+  font-size: 0.875rem;
 }
 
 pre {

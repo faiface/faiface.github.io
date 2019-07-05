@@ -6,10 +6,21 @@
     <description>Recent content on faiface blog</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Sun, 13 Aug 2017 16:21:12 +0200</lastBuildDate>
+    <lastBuildDate>Thu, 04 Jul 2019 19:28:03 +0200</lastBuildDate>
     
 	<atom:link href="https://faiface.github.io/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>How to use &#39;try&#39;</title>
+      <link>https://faiface.github.io/post/how-to-use-try/</link>
+      <pubDate>Thu, 04 Jul 2019 19:28:03 +0200</pubDate>
+      
+      <guid>https://faiface.github.io/post/how-to-use-try/</guid>
+      <description>The recent try proposal by Robert Griesemer sparked a lot of controversy. While the proposal is a subject to reasonable criticism, I didn&amp;rsquo;t feel like everyone was always on the same page.
+This post isn&amp;rsquo;t pro-try or anti-try. It just shows how try could be used so that you can form a more informed opinion.
+Suppose we are grad students of social sciences and need to come up with idea for a poll.</description>
+    </item>
     
     <item>
       <title>How I built an audio library using the composite pattern and higher-order functions</title>
