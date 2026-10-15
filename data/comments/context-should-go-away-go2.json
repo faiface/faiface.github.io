@@ -1,0 +1,163 @@
+[
+ {
+  "id": "3456064846",
+  "parent": null,
+  "author": "HaloMaster",
+  "date": "2017-08-07T15:27:11Z",
+  "message": "<p>Do you know Goroutine local storage <a href=\"https://github.com/jtolds/gls\" rel=\"nofollow ugc noopener\">https://github.com/jtolds/gls</a></p>"
+ },
+ {
+  "id": "3457173579",
+  "parent": null,
+  "author": "Andrew Bonventre",
+  "date": "2017-08-08T04:55:46Z",
+  "message": "<p>Please consider adding this to <a href=\"https://github.com/golang/go/wiki/ExperienceReports#context\" rel=\"nofollow ugc noopener\">https://github.com/golang/g...</a>, as this kind of post is exactly what we’re looking for.</p>"
+ },
+ {
+  "id": "3457235183",
+  "parent": null,
+  "author": "Kamil Chmielewski",
+  "date": "2017-08-08T06:34:36Z",
+  "message": "<p>Things like Erlang process linking (goroutines linking?) and OTP supervisor trees could be a potential solution to the cancelation problem.</p>"
+ },
+ {
+  "id": "3457331249",
+  "parent": "3456064846",
+  "author": "paskaahuomenta",
+  "date": "2017-08-08T09:10:12Z",
+  "message": "<p>Argh, all that mess for the advantage of... using a global log variable! <a href=\"https://dave.cheney.net/2017/06/11/go-without-package-scoped-variables\" rel=\"nofollow ugc noopener\">https://dave.cheney.net/201...</a></p>"
+ },
+ {
+  "id": "3457451675",
+  "parent": "3457173579",
+  "author": "Michal Strba",
+  "date": "2017-08-08T11:00:32Z",
+  "message": "<p>I wasn't sure if this qualifies for an experience report, but if you say so, I'll put it there :)</p><p>EDIT: Oh, it's already there!</p>"
+ },
+ {
+  "id": "3457746420",
+  "parent": null,
+  "author": "pkowalczuk",
+  "date": "2017-08-08T14:50:58Z",
+  "message": "<p>&gt; This probably doesn’t happen often, but it’s prone to name collisions.</p><p>From godoc: The provided key must be comparable and should not be of type string or any other built-in type to avoid collisions between packages using context. Users of WithValue should define their own types for keys. To avoid allocating when assigning to an interface{}, context keys often have concrete type struct{}. Alternatively, exported context key variables' static type should be a pointer or interface.</p>"
+ },
+ {
+  "id": "3458586423",
+  "parent": null,
+  "author": "dlsniper",
+  "date": "2017-08-08T23:17:36Z",
+  "message": "<p>Thank you for the great post. I would love to see some of the potential ways to handle cancellation at a language level (with the optional timeout). So looking forward for your next blog post on this.</p>"
+ },
+ {
+  "id": "3459311165",
+  "parent": null,
+  "author": "Chris Branch",
+  "date": "2017-08-09T12:52:43Z",
+  "message": "<p>For an idea of how \"context\" (as used for storing ctx.Value) might appear if given language support, look at Racket and its continuation marks. It's essentially an implicit, globally-available version of \"context\".</p><p>The fact that nobody has been in a hurry to reimplement that in the 15 years since the technique was developed may suggest it's not ergonomically worthwhile unless you have a genuine technical reason (i.e. supporting call/cc)</p>"
+ },
+ {
+  "id": "3462371468",
+  "parent": null,
+  "author": "Victor Barrantes",
+  "date": "2017-08-11T06:29:57Z",
+  "message": "<p>I have a quick question:<br>According to this: \" Go is a good language for writing servers, but Go is not a language for writing servers. Go is a general purpose programming language, just like C, C++, Java or Python. For example, I’ve been using Go for about 2 years and I’ve never written a single server in it.\"</p><p>If all (Go, C, C++, Java, Python) are just general purpose languages not for writing servers, then; which is \"the language\" to write servers?<br>Thanks.</p>"
+ },
+ {
+  "id": "3462798690",
+  "parent": null,
+  "author": "Harry Urcen",
+  "date": "2017-08-11T14:19:03Z",
+  "message": "<p>Good point, thank you. I'm also embarrassed by virus nature of context. In uncertain moment It becomes look as garbage that hides a logic of application. It makes code unclear and hard-to-readable. <br>If it is actually required everywhere, then why it shouldn't be built-in in language. So, I also believe that overusing context is a wrong way.</p>"
+ },
+ {
+  "id": "3463533395",
+  "parent": null,
+  "author": "Sam Vilain",
+  "date": "2017-08-11T22:25:47Z",
+  "message": "<p>Do you have data showing that context really is slow, or are you assuming that it must be slow?  My working performance theory for it is that it is cacheline friendly (generally stack allocated) and worst case adds a few chained cache misses.</p>"
+ },
+ {
+  "id": "3463600561",
+  "parent": "3463533395",
+  "author": "Michal Strba",
+  "date": "2017-08-11T23:26:11Z",
+  "message": "<p>It was actually an ungrounded claim, I admit. I ran some benchmarks.</p><p>Source: <a href=\"https://gist.github.com/faiface/1c9f2206bb08b8bc62c7048d40119dfa\" rel=\"nofollow ugc noopener\">https://gist.github.com/fai...</a></p><p>Results: <a href=\"https://gist.github.com/faiface/369acccbca6766693b556949aacc580e\" rel=\"nofollow ugc noopener\">https://gist.github.com/fai...</a></p><p>The results show that context is fairly fast when used with not too many values, but slower when there are many values.</p>"
+ },
+ {
+  "id": "3463601976",
+  "parent": "3462371468",
+  "author": "Michal Strba",
+  "date": "2017-08-11T23:27:30Z",
+  "message": "<p>Well, since all of them are general purpose languages, all of them are also suitable for writing servers ;) Go just has better libraries for that.</p>"
+ },
+ {
+  "id": "3463689514",
+  "parent": "3463601976",
+  "author": "Victor Barrantes",
+  "date": "2017-08-12T00:53:26Z",
+  "message": "<p>Okay, I thought you had a kind of \"philosopher's stone\" language just for writing servers.  :/<br>But now you clarify that everything quoted above should have been just understood like:<br>\"Go is a good language for writing servers, just like any other general purpose programming language like C, C++, Java or Python\"<br>Thanks for clarifying.</p>"
+ },
+ {
+  "id": "3464070221",
+  "parent": null,
+  "author": "Fazal Majid",
+  "date": "2017-08-12T09:20:52Z",
+  "message": "<p>I believe Google also uses context for their distributed tracing framework Dapper:<br><a href=\"https://research.google.com/pubs/pub36356.html\" rel=\"nofollow ugc noopener\">https://research.google.com...</a><br>Some evidence to that effect:<br><a href=\"https://github.com/golang/go/issues/21355\" rel=\"nofollow ugc noopener\">https://github.com/golang/g...</a><br>The pervasive nature of context would then be seen as a feature, not a bug.</p>"
+ },
+ {
+  "id": "3480593891",
+  "parent": null,
+  "author": "korya",
+  "date": "2017-08-22T04:14:58Z",
+  "message": "<p>I disagree with you that the only problem context.Context solves is cancellation. Yes, this is probably the main problem that it solves in most of the cases, but not the only one. As its name suggests it provides a context for some execution/calculation. A logical run-time context for an execution.</p><p>We use very context's WithValue() very intensively in order to provide some default app service registry. Then later by adding couple decorators/middleware calls we can in run-time reconfigure this app service per API call. For example, in order to diagnose some specific case I can pass a flag and a standard logger will be replaced with a more verbose one that will redirect all the output to a certain location so I can get an immediate feedback. Another example is to use it as backbone for feature flags or A/B testing.</p><p>It is a very simple concept, and very explicit so there is no magic. IMHO the 2 main problems with context.Context that it is too low-level and it is a run-time feature.</p><p>EDIT: the nice part of having context.Value is that the same \"context-aware\" API, your API, can be easily used with a lot of user interfaces: HTTP REST endpoints, CLI utilities and GUI. Just make sure to configure the context and pass it to your API. The main problem though is that it is a run-time feature, and there is no way to statically validate that the API contract is obeyed and context.Context is configured as expected by the latter.</p><p>PS I am not arguing that this is most elegant and essential feature of Go. There are other ways to solve the problems I described above. But what I am trying to say is that there is a valid use case for context.WithValue</p>"
+ },
+ {
+  "id": "3610272773",
+  "parent": null,
+  "author": "Jake",
+  "date": "2017-11-10T21:11:12Z",
+  "message": "<p>Not only is Context a poorly designed and implemented type but the documentation is deceptive and misleading (for example context.TODO and the mandate not to support nil Context is basically marketing the context package, there's no design or engineering goal) and the way it was hoisted into the standard library with debate about it squelched basically \"because app engine\" and then propagated (including into database/sql along with a weaselly attempt to break the go 1 compatibility guidelines) is very disturbing.</p>"
+ },
+ {
+  "id": "3838517658",
+  "parent": null,
+  "author": "Emanuel Ramos",
+  "date": "2018-04-04T11:46:07Z",
+  "message": "<p>Do you think this could be resolved with a .NET Task aproach? Instead passing context, the routine could return every time a \"routine\" struct or even \"context\" struct containing the state of the routine or channels to receive that info</p>"
+ },
+ {
+  "id": "4961897345",
+  "parent": null,
+  "author": "Joost helberg",
+  "date": "2020-06-20T21:10:39Z",
+  "message": "<p>wow, i couldn't understand context, even after reading some posts about it. Now, after your article, I do understand contexts and agree: they're useless. It tries to solve three problems with one concept, where solving the cancellation thing is the only real issue here.</p>"
+ },
+ {
+  "id": "5012644800",
+  "parent": null,
+  "author": "Denis S.",
+  "date": "2020-07-31T10:51:29Z",
+  "message": "<blockquote><br>Go is not a language for writing servers.<br>Go is a general purpose programming language<br></blockquote><p></p><p>I strongly disagree with that statement. Go can be used for other tasks but was designed to write network software in mind (and does this very good).</p><p>IMHO thats one of the reasons why Go lacks out-of-box some features that presents in general purpose languages like Java (e.g. Generics)</p>"
+ },
+ {
+  "id": "5012692010",
+  "parent": null,
+  "author": "LOL",
+  "date": "2020-07-31T11:58:02Z",
+  "message": "<p>Go can be used in a lots of fields, but it is primary is a DSL for writing asynchronous code.</p><p>And it is not that generic of course. Spawning OS threads is an example of what it cannot really do.</p>"
+ },
+ {
+  "id": "5012908762",
+  "parent": "3462371468",
+  "author": "michel perez",
+  "date": "2020-07-31T15:24:30Z",
+  "message": "<p>Erlang / Elixir</p>"
+ },
+ {
+  "id": "6634524249",
+  "parent": null,
+  "author": "GNerd",
+  "date": "2025-01-21T14:47:05Z",
+  "message": "<p>IIRC at Google, the C++ version of goroutines, called Fibers, had the notion of \"current fiber context\" so that you didn't have to pass it everywhere.  Perhaps having the ability to say \"context.GetCurrent()\", where necessary, would be reasonable?</p>"
+ }
+]

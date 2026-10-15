@@ -1,0 +1,76 @@
+baseURL = "https://faiface.github.io/"
+locale = "en-us"
+title = "faiface blog"
+theme = "PaperMod"
+
+enableRobotsTXT = true
+
+# Old links must keep working: posts have always lived at /post/<file-name>/.
+[permalinks]
+  post = "/post/:contentbasename/"
+
+[taxonomies]
+  tag = "tags"
+  category = "categories"
+
+# RSS at /index.xml and /post/index.xml (same paths as the old site); JSON powers search.
+[outputs]
+  home = ["HTML", "RSS", "JSON"]
+  section = ["HTML", "RSS"]
+
+[services.rss]
+  limit = -1
+
+[markup.highlight]
+  noClasses = false
+
+[params]
+  author = "Michal Štrba"
+  description = "faiface blog"
+  defaultTheme = "auto"
+  mainSections = ["post"]
+  comments = true
+  ShowReadingTime = true
+  ShowPostNavLinks = true
+  ShowCodeCopyButtons = true
+  ShowRssButtonInSectionTermList = true
+  ShowFullTextinRSS = true
+  DateFormat = "January 2, 2006"
+
+  # New comments live in GitHub Discussions on this repo. Fill in repoId and categoryId
+  # (from https://giscus.app) to turn them on; until then only the archived comments show.
+  [params.giscus]
+    repo = "faiface/faiface.github.io"
+    repoId = "MDEwOlJlcG9zaXRvcnk5OTM4MzY2Nw=="
+    category = "Comments"
+    categoryId = "DIC_kwDOBex5c84DIjk7"
+
+  [params.homeInfoParams]
+    Title = "faiface blog"
+    Content = "Posts on programming and programming languages."
+
+  [[params.socialIcons]]
+    name = "github"
+    url = "https://github.com/faiface"
+
+  [[params.socialIcons]]
+    name = "rss"
+    url = "index.xml"
+
+[menus]
+  [[menus.main]]
+    name = "Posts"
+    pageRef = "/post"
+    weight = 10
+  [[menus.main]]
+    name = "Archive"
+    pageRef = "/archives"
+    weight = 20
+  [[menus.main]]
+    name = "Search"
+    pageRef = "/search"
+    weight = 30
+  [[menus.main]]
+    name = "Tags"
+    pageRef = "/tags"
+    weight = 40

@@ -1,0 +1,226 @@
+[
+ {
+  "id": "4528013555",
+  "parent": null,
+  "author": "paskaahuomenta",
+  "date": "2019-07-05T11:18:25Z",
+  "message": "<p>You should totally decorate your open, just add missing information instead of repeating the filename. Why are you opening a file?</p><p>\"Cannot start application: random_file.txt: No such file or directory\"</p><p>What does it mean?!</p><p>It should be:</p><p>\"Cannot start application: cannot read configuration file: random_file.txt: No such file or directory\"</p><p>Ah much better now!</p><p>I really cannot find a place where \"try\" is a good idea.</p>"
+ },
+ {
+  "id": "4528018615",
+  "parent": "4528013555",
+  "author": "Michal Strba",
+  "date": "2019-07-05T11:25:14Z",
+  "message": "<p>That's roughly what's there, if you haven't noticed:</p><p><code>parse respondnts.txt: open respondnts.txt: no such file or directory</code></p>"
+ },
+ {
+  "id": "4528020131",
+  "parent": "4528013555",
+  "author": "Michal Strba",
+  "date": "2019-07-05T11:27:09Z",
+  "message": "<p>Which of the error messages produced by this program do you consider insufficient?</p>"
+ },
+ {
+  "id": "4528088005",
+  "parent": "4528013555",
+  "author": "LOL",
+  "date": "2019-07-05T12:47:04Z",
+  "message": "<blockquote>I really cannot find a place where \"try\" is a good idea.</blockquote><p><br>I actually see the place: it is Go itself.</p><p>But it is really narrow case: Go's application area are networks services and CLI utilities and try is not needed there indeed.</p><p>This is pretty much a big sign of Go type system being inadequate for writing languages BTW.</p>"
+ },
+ {
+  "id": "4528090500",
+  "parent": "4528020131",
+  "author": "LOL",
+  "date": "2019-07-05T12:49:36Z",
+  "message": "<blockquote>Don’t decorate what’s already decorated (e.g. os.Open).</blockquote><p><br>He meant this nonsense.</p>"
+ },
+ {
+  "id": "4528093182",
+  "parent": "4528018615",
+  "author": "paskaahuomenta",
+  "date": "2019-07-05T12:52:32Z",
+  "message": "<p>It's not. \"parse\" is very generic: why are you parsing it?</p>"
+ },
+ {
+  "id": "4528096402",
+  "parent": "4528093182",
+  "author": "Michal Strba",
+  "date": "2019-07-05T12:55:55Z",
+  "message": "<p>So put something else there, no problem.</p><p>And how about all the other 'try's, anything wrong with them?</p>"
+ },
+ {
+  "id": "4528098420",
+  "parent": "4528090500",
+  "author": "Michal Strba",
+  "date": "2019-07-05T12:58:00Z",
+  "message": "<p>As you can see in the post, I do actually add context to `os.Open`. But, I add context that's applicable to all errors returned from `parseRespondents`. I don't add context that just repeats what `os.Open` already returns.</p>"
+ },
+ {
+  "id": "4528103540",
+  "parent": "4528096402",
+  "author": "paskaahuomenta",
+  "date": "2019-07-05T13:03:19Z",
+  "message": "<p>Yes, while 'return' is on the very left of the statement, 'try' hides in the middle-right, creating a sort of \"spooky action at a distance\".</p><p>With a bit of ingenuity, you can contextualize all error returns and the contextualization is a form of documentation (you can really use it instead of comments to describe your function step-by-step!)</p><p>For the boring parts (many Write in a row) there is the \"errors as values\" blog post which explains how to avoid the boring if-err-return.</p>"
+ },
+ {
+  "id": "4528108682",
+  "parent": "4528103540",
+  "author": "Michal Strba",
+  "date": "2019-07-05T13:08:29Z",
+  "message": "<p>Please don't use this discussion as a new place to post all the arguments that have already been posted everywhere.</p><p>This is a specific example that I provided and this example is definitely improved by 'try'. If it doesn't apply to your code, that's fine. As I said in the article, there's nothing wrong with 'if err != nil'.</p>"
+ },
+ {
+  "id": "4529084473",
+  "parent": null,
+  "author": "Jaehyun Yeom",
+  "date": "2019-07-06T06:54:01Z",
+  "message": "<p>Thanks for an example.</p><p>1. Ref is not necessary. You can use closure for defer. (I mean using fmt.HandleErrorf(), instead of if err != nil and Wrapf())<br>2. There are ways to remove repeated err != nil naturally. bufio.Scanner is an example for that. Interestingly the code is using Scanner which we can avoid handling io.EOF, but the code reintroduce that complexity again.<br>3. The given code totally ignores scanner error like disk read error, etc.</p><p>I think I can still write clean code without try at all. I can basically copy the behavior of the given code and make a working code in today's Go (or 1.13).</p>"
+ },
+ {
+  "id": "4529100655",
+  "parent": "4529084473",
+  "author": "Jaehyun Yeom",
+  "date": "2019-07-06T07:26:10Z",
+  "message": "<p>Here's the example. I think this way is better because there's no need to handle the special case for the 1st field \"name\", and it's cleaner in the caller's side using the API. What do you think?</p><p><a href=\"https://play.golang.org/p/ICw2ALDkaM9\" rel=\"nofollow ugc noopener\">https://play.golang.org/p/I...</a></p><p>I would do a little differently in my own project, but for demonstration purpose, I made all errors look just like the original code except that I removed \"EOF\" and added proper scanner errors handling. Those defer func() lines in the code are to mimic your fmt.HandleErrorf() to get the code work.</p><p>I don't like try() because it is harder to see where the function returns. When I see only 1 line of return statement like return nil in the function, I expect it always returns nil. But it doesn't work that way with try(). Make it even worse, try isn't always at the beginning of the line, so I really have to scan the whole characters to see where it could return what.</p><p>The example code I linked is not trivial to follow that either, but when I see return rs.Err(), I know it may return nil or non-nil and I can start reading what that means and how it works.</p>"
+ },
+ {
+  "id": "4529127638",
+  "parent": "4528108682",
+  "author": "paskaahuomenta",
+  "date": "2019-07-06T08:23:48Z",
+  "message": "<p>Oh I see, you have it all sorted out already :)</p><p>Please be intellectually honest and remove this sentence from the post: \"This post isn’t pro-try or anti-try.\"</p><p>You clearly are one sided.</p>"
+ },
+ {
+  "id": "4529150591",
+  "parent": "4529100655",
+  "author": "Michal Strba",
+  "date": "2019-07-06T09:12:41Z",
+  "message": "<p>Hey, thanks for rewriting the code like that! You did an awesome job, I must say your result is really elegant.</p><p>However, it's not necessarily easier to follow than the code with try. It took a minute to figure out how the control flow in your program works and how error context works.</p><p>For example, I look at your code and I can't tell if a function will be executed at a first sight, because that depends on the internal error state. So I would say your solution has similar problems as the problems you're attributing to try, but nevertheless, it's a very nice solution.</p>"
+ },
+ {
+  "id": "4529154083",
+  "parent": "4529127638",
+  "author": "Michal Strba",
+  "date": "2019-07-06T09:19:42Z",
+  "message": "<p>I have a personal opinion. I didn't express the opinion in the article. Therefore, the article is unbiased just as it says.</p><p>It's just unproductive to use the same arguments over and over, when those arguments don't resonate with proponents of try.</p><p>Here's an argument: <a href=\"https://github.com/golang/go/issues/32437#issuecomment-508896080\" rel=\"nofollow ugc noopener\">https://github.com/golang/g...</a></p><p>Griesemer's tryhard tool found that 70% of all error handling code in the standard library can be directly rewritten to use try.</p>"
+ },
+ {
+  "id": "4529631626",
+  "parent": "4529150591",
+  "author": "Jaehyun Yeom",
+  "date": "2019-07-06T19:15:18Z",
+  "message": "<p>Thanks for the comment. The *control flow* is obvious because it only returns at return statement. For example, if I put fmt.Println(\"something\") at line 88, it will print unless the function returns early at line 79.  If this was implemented with try, it may return early at try and it's harder to know that quickly.</p><p>You're right it depends on the internal error state and that may be hard to understand sometimes. But _basically what scanner does is that it doesn't do anything if it's already done_ (just like bufio.Scanner). That's it.</p><p>Does the internal error state give the same complexity? The difference is that try() changes the control flow but method on object is about behavior, and the implementation details are layered.</p><p>The out layer, the usage of RespendentScanner is same as bufio.Scanner and I can easily illustrate line 116 to 120 as Example test documentation and it's easy to understand. And that's actually the essence of the rewritten parseRespendents() nothing more than that.</p><p>Uncovering another layer, line 77 Scan() function is easy to understand. It just does what it says and early return for done scanner is just like bufio.Scanner.Scan().</p><p>One more layer, the parseField() method. Looks a bit verbose but line 48-53 is HandleErrorf, and line 54-57 is just Scan() call, but handling the error properly which was missing in the original code. The rest parsing code is not touched much.</p><p>How to read this parseField() code is to see return statements. It has 3 early returns which are indented. One is no-error return early for done scanner, next 2 are error conditions (one is bufio.Scanner error and the other is format error) and error value is set and return. When error happens the scanner is done and further scanning does nothing. That's it. Actually for this case, I may just repeat the defer contents to those 2 error returns just like what I did in parseEmptyLine() method. That's actually one line fewer and easier to read. Just did defer to mimic the original code HandleErrorf() pattern.</p><p>We looked all 3 layers. 1st is just a simple for loop, 2nd is just says what it does, 3rd is to return early for done condition and 2 error cases. That's it.</p><p>In the original code, because it does return early with try(), we're forced to use defer HandleErrorf(). In the rewritten code, I don't need to depend on defer much. I may copy repeat the code if I think that's cleaner.</p>"
+ },
+ {
+  "id": "4529658321",
+  "parent": "4529150591",
+  "author": "Jaehyun Yeom",
+  "date": "2019-07-06T19:43:13Z",
+  "message": "<p>And this blog post by Rob Pike may be helpful as well: <a href=\"https://blog.golang.org/errors-are-values\" rel=\"nofollow ugc noopener\">https://blog.golang.org/err...</a></p>"
+ },
+ {
+  "id": "4529678584",
+  "parent": "4529631626",
+  "author": "Michal Strba",
+  "date": "2019-07-06T20:04:25Z",
+  "message": "<p>You are right that your solution doesn't impact control flow, but only if we're speaking in very strict terms. The internal state of the scanner affects whether the method is going to be executed at all, which I think has a very similar complexity.</p><p>I know the article by Rob Pike and I love it :). However, that (and yours) solution has a big shortcoming: you have to reimplement it for everything, it's not reusable.</p><p>A gopher will understand `try` once and see it everywhere. With your approach, one has to first understand that specific implementation of the idea from Rob Pike and then proceed.</p><p>Also, my code is 2/3 of yours, mostly because I didn't have to implement any architecture for dealing with errors.</p><p>I understand your points and admire your code. But I still think `try` is better here and it's complexity in affecting control flow really isn't too much of a complexity.</p>"
+ },
+ {
+  "id": "4529699604",
+  "parent": "4529631626",
+  "author": "Michal Strba",
+  "date": "2019-07-06T20:27:07Z",
+  "message": "<p>Btw, I somehow missed this in your previous post:</p><p>&gt; there's no need to handle the special case for the 1st field \"name\"</p><p>There still is. Your code functions incorrectly if there are no respondents in the file, or if there is a newline after one respondent and EOF follows.</p><p>Special casing the 1st field is because it may not be there at all.</p>"
+ },
+ {
+  "id": "4529924536",
+  "parent": "4529699604",
+  "author": "Jaehyun Yeom",
+  "date": "2019-07-07T01:13:23Z",
+  "message": "<p>Edited: Never mind, see the above (next) comment instead.</p><p>Sorry, I don't understand. Like I said I made all errors look just like the original code except that I removed \"EOF\". It doesn't tell \"EOF\" but it still report errors for the cases you're mentioning.</p><p>Try the code with your cases:<br> - No respondents in the file: <a href=\"https://play.golang.org/p/rmwLevnVGb2\" rel=\"nofollow ugc noopener\">https://play.golang.org/p/r...</a><br> - One respondent: <a href=\"https://play.golang.org/p/RETdnoa_yhF\" rel=\"nofollow ugc noopener\">https://play.golang.org/p/R...</a><br> - One respondent and a new line: <a href=\"https://play.golang.org/p/c7pPM72FGVd\" rel=\"nofollow ugc noopener\">https://play.golang.org/p/c...</a><br> - Two respondents and others work as well.</p>"
+ },
+ {
+  "id": "4529943496",
+  "parent": "4529699604",
+  "author": "Jaehyun Yeom",
+  "date": "2019-07-07T01:41:33Z",
+  "message": "<p>Ah, I see what you mean now. You mean it should handle empty file as a non-error case. I thought there should be at least one entry. It's quite easy to fix it. Could you try with this?</p><p><a href=\"https://play.golang.org/p/9ZVtblUuJwj\" rel=\"nofollow ugc noopener\">https://play.golang.org/p/9...</a></p>"
+ },
+ {
+  "id": "4530094480",
+  "parent": "4529943496",
+  "author": "Michal Strba",
+  "date": "2019-07-07T06:09:14Z",
+  "message": "<p>Yes, that fixes it, thanks! Although, it took me about 3 minutes to understand how it fixes it :D</p>"
+ },
+ {
+  "id": "4530228507",
+  "parent": "4529678584",
+  "author": "Jaehyun Yeom",
+  "date": "2019-07-07T11:04:07Z",
+  "message": "<p>Actually I disagree. Try isn't that reusable. You had to implement your code anyway. The rewritten code doesn't add much. It's not like 50% increase. I'll make the API easy to use anyway and add lined scanner anyway even with try.</p><p>And actually we already have a solution. I've tried using something that's almost identical to try for a while like 3 years ago. Don't have time right now I'm traveling, but I can show you almost identical code of yours that is working in Go 1, if you're interested.</p>"
+ },
+ {
+  "id": "4530233031",
+  "parent": "4530228507",
+  "author": "Michal Strba",
+  "date": "2019-07-07T11:11:58Z",
+  "message": "<p>If you count the lines, your code is actually 50% increase :D</p><p>And yeah sure, I'd love to see that!</p>"
+ },
+ {
+  "id": "4530265792",
+  "parent": "4530233031",
+  "author": "Jaehyun Yeom",
+  "date": "2019-07-07T12:02:48Z",
+  "message": "<p>About # of lines. To compare, you should at least remove mustPrepareFile() function which has all the input embedded. The number of lines are the same and it's more readable. And the rewritten code works in Go1 without try and HandleErrorf.</p>"
+ },
+ {
+  "id": "4530785657",
+  "parent": "4530233031",
+  "author": "Jaehyun Yeom",
+  "date": "2019-07-07T20:55:12Z",
+  "message": "<p>Here's it. This code is like 99% identical to your code and it works today.</p><p><a href=\"https://play.golang.org/p/g_d2n5YJwjz\" rel=\"nofollow ugc noopener\">https://play.golang.org/p/g...</a></p><p>I think try() is similar to panic() that it can change the control flow without explicit return. If there's a reason not to use panic, I think that's similar for try.</p><p>The try-like feature is implemented using panic, but it doesn't consume other panics that must package didn't create, so it should be safe to use.</p><p>I've just added HandleErrorf to the package today, but more robust HandleErr was there for 3 years and it could also do what HandleErrorf could do. I found that I didn't like the hidden returns, so I avoided using it.</p>"
+ },
+ {
+  "id": "4530954105",
+  "parent": "4530785657",
+  "author": "Michal Strba",
+  "date": "2019-07-08T00:14:55Z",
+  "message": "<p>Wow, that's actually really impressive :D. Doesn't scale as well as `try` because it needs to have a separate implementation for each type, but very nice anyway! (Btw, generics wouldn't fix that, because `try` is also variadic.)</p><p>I don't think that the reason not to use panic is because it affects control flow. I think it's more like that it's pretty cumbersome to use and authors of Go teach us that it's the best practice to use it for critical failures only.</p><p>Well, I guess we need to put `try` to a practical test. See how it works, I'm not really sure we can solve it's usefulness and impact just by hypothesising. Your package will, of course, help me personally with that evaluation before `try` is added (if it will be at all) to the language. Thanks!</p>"
+ },
+ {
+  "id": "4530958595",
+  "parent": "4530265792",
+  "author": "Michal Strba",
+  "date": "2019-07-08T00:20:55Z",
+  "message": "<p>Okay, I only removed the file content before. So, after removing the whole `mustPrepareFile()` and its invocation, it becomes 94 LOC vs 131 LOC, which still makes my code 71% of your original one.</p><p>Your new code is 96 LOC, so it's the same length.</p>"
+ },
+ {
+  "id": "4530973900",
+  "parent": "4530954105",
+  "author": "Jaehyun Yeom",
+  "date": "2019-07-08T00:41:27Z",
+  "message": "<p>In most cases, must.Any will be sufficient, it can cover all \"one value, one error\" cases without much stress. If there are 3 or more return values, it's normally not easy to use it in one line anyway within the expression (not just assignments). There's a way to make it \"scale\" better, not really difficult to be honest.</p><p>I think the reason not to use panic is because it affects control flow and that's why authors of Go teach us that way. In case of runtime errors like divide by zero or index out of bound, it's actually not possible to proceed the logic in the normal control flow structs, so it's unavoidable to use panic. Don't panic means we should minimize that control flow confusion whenever it's possible to avoid that. That's all the background of best practice and so on.</p><p>You can test it. I had done and what I found was that it doesn't add that much value. It looks useful in the beginning, but later, I found that there are better ways. It may be useful for some people. Every feature is useful for someone, that's how many languages evolved and became more and more complex. I think Go is very unique, avoiding that mistake.</p>"
+ },
+ {
+  "id": "4531715052",
+  "parent": null,
+  "author": "Nergal",
+  "date": "2019-07-08T16:52:13Z",
+  "message": "<p>I would do this in the following format: <a href=\"https://gist.github.com/nerg4l/4f28edfbe4fa9e227d4f72c0411a457c\" rel=\"nofollow ugc noopener\">https://gist.github.com/ner...</a><br>(Without try)</p>"
+ },
+ {
+  "id": "4536912684",
+  "parent": "4531715052",
+  "author": "LOL",
+  "date": "2019-07-12T14:18:03Z",
+  "message": "<p>Seems cleaner than the `try` solution, which is pretty much substandard</p>"
+ },
+ {
+  "id": "4541581220",
+  "parent": "4531715052",
+  "author": "Nergal",
+  "date": "2019-07-16T12:08:45Z",
+  "message": "<p>I added an other approach which \"lifts\" the error.<br>Go Lift: <a href=\"https://www.youtube.com/watch?v=1B71SL6Y0kA\" rel=\"nofollow ugc noopener\">https://www.youtube.com/wat...</a></p>"
+ }
+]

@@ -1,0 +1,128 @@
+[
+ {
+  "id": "3473273067",
+  "parent": null,
+  "author": "David Keeling",
+  "date": "2017-08-17T19:15:40Z",
+  "message": "<p>Great article, thanks!</p><p>I was wondering, why in Split do you do<br>&gt; return Mk(Collect(Take(n, s))...), s<br>instead of just:<br>&gt; return Take(n, s), s</p><p>I realize they have slightly different behavior as you can see here <a href=\"https://play.golang.org/p/5rRgQ-wLCi\" rel=\"nofollow ugc noopener\">https://play.golang.org/p/5...</a>. Still, it seems if you're using strictly functional patterns those behaviors wouldn't come about, so why the extra calls to Collect and Mk?</p><p>Would also love to see your solution to the Dup exercise.</p>"
+ },
+ {
+  "id": "3473448640",
+  "parent": "3473273067",
+  "author": "Michal Strba",
+  "date": "2017-08-17T20:48:46Z",
+  "message": "<p>The main difference between Mk(Collect(Take(...))) and Take(...) is apparent from here: <a href=\"https://play.golang.org/p/s3X2I5-rw8\" rel=\"nofollow ugc noopener\">https://play.golang.org/p/s...</a></p><p>The thing to realize is that Seq is not immutable. Calling Next will advance the sequence, thus mutate it. That's why we need to collect the first n elements from the sequence, or otherwise we couldn't use the split parts independently. Hope this answers your question.</p><p>Regarding the Dup exercise, it's not nearly as nice as Split :). You have to \"buffer\" (remember / cache) the elements from the returned sequence which is currently ahead of the second returned sequence and vice-versa, if the other one gets ahead. The sequence which is behind will return those cached elements. You need to make sure, that old cached elements get garbage collected, but that's easy, if you work properly with slices.</p><p>You can take a look at how I implemented Dup for Beep here: <a href=\"https://github.com/faiface/beep/blob/master/compositors.go#L143\" rel=\"nofollow ugc noopener\">https://github.com/faiface/...</a></p>"
+ },
+ {
+  "id": "3473583754",
+  "parent": null,
+  "author": "Marko Tikvic",
+  "date": "2017-08-17T22:12:43Z",
+  "message": "<p>This is mind-boggling a bit. Let me try and clear this for myself. The composites (Take for example) don't get \"executed\" until they get passed to Collect, right? Up until that point they're like stored patterns with limiting values (except for Naturals). Is this explanation in the ball park of what's actually happening? :)</p>"
+ },
+ {
+  "id": "3473615966",
+  "parent": "3473583754",
+  "author": "Michal Strba",
+  "date": "2017-08-17T22:35:57Z",
+  "message": "<p>Yep, that sounds correct. Seq doesn't get \"executed\" until you call Next and Collect calls Next until the end of the sequence. This is actually called lazy evaluation, which means, that we never compute ahead-of-time, we always only compute as much as we need (Next only computes one element). This is a common practice in functional programming.</p>"
+ },
+ {
+  "id": "3474007959",
+  "parent": "3473615966",
+  "author": "Marko Tikvic",
+  "date": "2017-08-18T04:28:25Z",
+  "message": "<p>Ah, I see. Thank you for clarifying. :)</p>"
+ },
+ {
+  "id": "3522728022",
+  "parent": null,
+  "author": "Abhirath Mahipal",
+  "date": "2017-09-18T09:43:02Z",
+  "message": "<p>Brilliant idea. Do you have an email list? I would like to read future posts without having to check every now and then.</p>"
+ },
+ {
+  "id": "3677248118",
+  "parent": null,
+  "author": "konart",
+  "date": "2017-12-24T20:38:15Z",
+  "message": "<p>Just got into Go and have to ask: can you please elaborate just a bit on the \"we usually don’t like design patterns in Go\" part? While it is clear that go's OOP is a different from what you may see in, say, Ruby - why is do 'we' don't like design patterns in Go?</p>"
+ },
+ {
+  "id": "3677430361",
+  "parent": "3677248118",
+  "author": "Michal Strba",
+  "date": "2017-12-25T00:26:50Z",
+  "message": "<p>Yeah, don't read too much into that line. All I wanted to say is that Go's approach to OOP is a little different than say Java or C++ and thus design patterns often don't apply or are replaced by other concepts (Strategy can be usually replaced by closures, etc.)</p>"
+ },
+ {
+  "id": "3988302655",
+  "parent": null,
+  "author": "li yuqian",
+  "date": "2018-07-14T12:47:37Z",
+  "message": "<p>Hi Michal,<br>Thanks for the great post and package \"beep\". I am try to use your package to my project. Just one question, I need a 16bits 8Khz wave format for my project. is there a way to convert the mp3 decoded raw 44Khz samples to 8Khz, it likes the sox did in this example <a href=\"https://sourceforge.net/p/sox/code/ci/master/tree/src/example3.c#l81\" rel=\"nofollow ugc noopener\">https://sourceforge.net/p/s...</a>. I tried the package resample, it just low down the speed of play :(. any suggestion?<br>Thank you</p>"
+ },
+ {
+  "id": "3988305543",
+  "parent": "3988302655",
+  "author": "Michal Strba",
+  "date": "2018-07-14T12:50:54Z",
+  "message": "<p>You need to play it/save it at the new rate too, in order for it to sound the same. When you play fewer/more samples in the same rate as before, it's going to be faster/slower.</p>"
+ },
+ {
+  "id": "3988342310",
+  "parent": "3988305543",
+  "author": "li yuqian",
+  "date": "2018-07-14T13:30:33Z",
+  "message": "<p>Thanks for you quick reply :).<br>I added few code to mp3-playing.go example<br>----------<br>sr := beep.SampleRate(8000)<br>speaker.Init(sr, sr.N(time.Second/2))<br>speaker.Play(beep.Resample(3, format.SampleRate, sr, s))<br>---------<br>It quit immediately, How I can let it continue to play :), sorry I am newbie for Go :)</p>"
+ },
+ {
+  "id": "3988365368",
+  "parent": "3988342310",
+  "author": "Michal Strba",
+  "date": "2018-07-14T13:53:21Z",
+  "message": "<p>The same way you avoid immediately exiting as with any other beep.Streamer. Either select{} at the end, or sleep an appropriate time, or, the best, sequence it with the \"exit\" callback as described in the Beep's README.</p>"
+ },
+ {
+  "id": "3988382044",
+  "parent": "3988365368",
+  "author": "li yuqian",
+  "date": "2018-07-14T14:09:06Z",
+  "message": "<p>great, I checked the README again, I got it works, thanks again :)</p>"
+ },
+ {
+  "id": "3990358714",
+  "parent": "3988365368",
+  "author": "li yuqian",
+  "date": "2018-07-16T01:48:03Z",
+  "message": "<p>Hi Michal,</p><p>I wrote few lines for how my code to use the beep as below shows<br>---------<br>package dataprocessor</p><p>import (<br>\"errors\"<br>\"<a href=\"http://github.com/faiface/beep/mp3\" rel=\"nofollow ugc noopener\">github.com/faiface/beep/mp3</a>\"<br>\"<a href=\"http://github.com/faiface/beep\" rel=\"nofollow ugc noopener\">github.com/faiface/beep</a>\"<br>\"net/http\"<br>log \"<a href=\"http://github.com/Sirupsen/logrus\" rel=\"nofollow ugc noopener\">github.com/Sirupsen/logrus</a>\"<br>\"sync\"<br>)</p><p>type Dataprocessor struct {<br>s beep.Streamer<br>rate int<br>}</p><p>var (<br>samples  [][2]float64<br>buf      []byte<br>mu       sync.Mutex<br>)</p><p>func init() {<br>//TODO initial buffer<br>}</p><p>func New(rate int) (*Dataprocessor, error) {<br>resp, err := http.Get(\"<a href=\"http://newcap.leanstream.co/CIRKFM-MP3?args=web_02\" rel=\"nofollow ugc noopener\">http://newcap.leanstream.co...</a>\")<br>if err != nil {<br>log.Fatal(err)<br>}<br>s, format, _ := mp3.Decode(resp.Body)<br>log.Println(\"mp3 info\", format.NumChannels, format.SampleRate, format.Precision)</p><p>sr := beep.SampleRate(rate)<br>sn := beep.Seq(beep.Resample(3, format.SampleRate, sr, s))</p><p>numBytes := 4000 * 4<br>samples = make([][2]float64, 4000)<br>buf = make([]byte, numBytes)</p><p>p := Dataprocessor{<br>s: sn,<br>rate: rate,<br>}<br>return &amp;p, nil<br>}</p><p>func (d *Dataprocessor) ProcessRate() (int, error) {<br>sr, ok := d.s.Stream(samples)<br>if !ok {<br>return 0, errors.New(\"read out samples from streamer is wrong\")<br>}<br>return sr, nil<br>}</p><p>func (d *Dataprocessor) Read() ([]byte, int, error){<br>mu.Lock()<br>cnt, err := d.ProcessRate()<br>if err != nil {<br>return nil, cnt, errors.New(\"read out samples from streamer is wrong\")<br>}<br>for i := range samples {<br>for c := range samples[i] {<br>//take one channel<br>//var c = 1<br>val := samples[i][c]<br>if val &lt; -1 {<br>val = -1<br>}<br>if val &gt; +1 {<br>val = +1<br>}<br>valInt16 := int16(val * (1&lt;&lt;15 - 1))<br>low := byte(valInt16)<br>high := byte(valInt16 &gt;&gt; 8)<br>buf[i*4+c*2+0] = low<br>buf[i*4+c*2+1] = high<br>}<br>}<br>mu.Unlock()<br>log.Println(\"resamples is\", len(buf))<br>return buf, len(buf), nil<br>}<br>--------------<br>basically, my code is call the Read function to get the decoded and rate changed samples, but it always crashed on resample.go line 96 like below shows<br>------------<br>panic: runtime error: index out of range</p><p>goroutine 35 [running]:<br><a href=\"http://github.com/faiface/beep.(*Resampler).Stream(0xc42014c380\" rel=\"nofollow ugc noopener\">github.com/faiface/beep.(*R...</a>, 0xc4201c0000, 0x8bd, 0x8bd, 0xc420053808, 0x52cd0d)<br>/root/work/src/<a href=\"http://github.com/faiface/beep/resample.go:96\" rel=\"nofollow ugc noopener\">github.com/faiface/beep/res...</a> +0x465<br><a href=\"http://github.com/faiface/beep.Seq.func1(0xc4201c0000\" rel=\"nofollow ugc noopener\">github.com/faiface/beep.Seq...</a>, 0xfa0, 0xfa0, 0xc400000000, 0x458de0)<br>/root/work/src/<a href=\"http://github.com/faiface/beep/compositors.go:86\" rel=\"nofollow ugc noopener\">github.com/faiface/beep/com...</a> +0xc6<br><a href=\"http://github.com/faiface/beep.StreamerFunc.Stream(0xc420158540\" rel=\"nofollow ugc noopener\">github.com/faiface/beep.Str...</a>, 0xc4201c0000, 0xfa0, 0xfa0, 0xc4200538a8, 0x430e1e)<br>/root/work/src/<a href=\"http://github.com/faiface/beep/interface.go:100\" rel=\"nofollow ugc noopener\">github.com/faiface/beep/int...</a> +0x44<br>------------<br>what is wrong in there, would you please look at that? thank you</p>"
+ },
+ {
+  "id": "4296748071",
+  "parent": null,
+  "author": "Jason Aylward",
+  "date": "2019-01-20T13:24:38Z",
+  "message": "<p>I stumbled onto this article yesterday and spent the rest of the day working through your repo.  It's really fantastic.  Thanks for sharing.<br>I'm really interested in doing something similar so I have to ask, can you recommend any resources for building audio software?  Or did you build this based more on intuition of how an audio engine would work?  Thanks again.</p>"
+ },
+ {
+  "id": "4297226635",
+  "parent": "4296748071",
+  "author": "Michal Strba",
+  "date": "2019-01-20T16:11:19Z",
+  "message": "<p>Hi! Glad you liked it :)</p><p>Before I build Beep, I was researching and looking how other libraries design their API, most notably OpenAL and SFML in C++ (SFML uses OpenAL). Now, this might sound pretentious, but I found OpenAL quite terrible. It has these buffers that are supposed to make it more performant, but in reality they increase latency and make it very hard to apply audio effects in real time, or stream music in real time.</p><p>So, I though I could do better. Audio streaming and processing is not very CPU costly, so why make a complicated framework when you can just stream audio samples directly to the output, right? So that's what I did and as I was designing it, I figured out all these little ways one can compose things together and ended up with this pretty flexible, and compared to OpenAL, almost latency-free library.</p><p>Regarding the design of Beep, yeah, that's entirely mine.</p><p>But to answer your question: I recommend learning about ALSA, a very low level, but very simple library for directly handling audio hardware. You can check out OpenAL, but it's more complicated than ALSA and also less flexible. Many libraries, including SFML are built on OpenAL. Their API is not bad, so you can check that out too ;)</p>"
+ },
+ {
+  "id": "5100280042",
+  "parent": "3473448640",
+  "author": "Ammaar Esmailjee",
+  "date": "2020-10-06T22:29:51Z",
+  "message": "<p>I was browsing my own gists many years later (today) and came across my attempt at the Dup Exercise, and looking at your implementation, it seems we did it in a similar way.</p><p>func Dup:  <a href=\"https://gist.github.com/marz619/6bbbbe0323899a6cc4b59ea30bbaadef#file-seq-go-L68-L76\" rel=\"nofollow ugc noopener\">https://gist.github.com/mar...</a></p><p>using a bufferedSeq: <a href=\"https://gist.github.com/marz619/6bbbbe0323899a6cc4b59ea30bbaadef#file-buf_seq-go\" rel=\"nofollow ugc noopener\">https://gist.github.com/mar...</a></p>"
+ },
+ {
+  "id": "5100303578",
+  "parent": "5100280042",
+  "author": "Michal Strba",
+  "date": "2020-10-06T22:52:11Z",
+  "message": "<p>Nice to know someone still coming here. :D Good job on the exercise, too!</p>"
+ }
+]
