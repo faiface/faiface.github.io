@@ -1,0 +1,29 @@
+{{- define "main" }}
+<article class="post">
+  <header class="post-header">
+    <h1 class="post-title">{{ .Title }}</h1>
+    {{- if eq .Section "post" }}
+    <p class="meta post-meta">By {{ site.Params.author }} <span aria-hidden="true">·</span> {{ partial "post_meta.html" . }}</p>
+    {{- end }}
+  </header>
+  <div class="post-content">
+    {{ .Content }}
+  </div>
+  {{- if eq .Section "post" }}
+  {{- /* Hugo's "next" in a section is the newer post, "prev" the older one. */}}
+  {{- $older := .PrevInSection }}
+  {{- $newer := .NextInSection }}
+  {{- if or $older $newer }}
+  <nav class="post-nav" aria-label="More posts">
+    {{- with $older }}
+    <a class="post-nav-older" href="{{ .RelPermalink }}"><span class="post-nav-label">← Older</span><span class="post-nav-title">{{ .Title }}</span></a>
+    {{- end }}
+    {{- with $newer }}
+    <a class="post-nav-newer" href="{{ .RelPermalink }}"><span class="post-nav-label">Newer →</span><span class="post-nav-title">{{ .Title }}</span></a>
+    {{- end }}
+  </nav>
+  {{- end }}
+  {{- partial "comments.html" . }}
+  {{- end }}
+</article>
+{{- end }}

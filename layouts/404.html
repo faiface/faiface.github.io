@@ -1,0 +1,7 @@
+{{- define "main" }}
+<div class="not-found">
+  <p class="meta">Error 404</p>
+  <h1 class="page-title">This page doesn't exist</h1>
+  <p>Maybe it moved, or the link has a typo. <a href="{{ "/" | relURL }}">Go to the front page</a> or browse <a href="{{ "post/" | relURL }}">all posts</a>.</p>
+</div>
+{{- end }}

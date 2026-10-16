@@ -1,0 +1,29 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ if .IsHome }}{{ site.Title }}{{ else }}{{ .Title }} · {{ site.Title }}{{ end }}</title>
+{{- $description := site.Params.description }}
+{{- if .Description }}{{ $description = .Description }}{{ else if .IsPage }}{{ $description = .Summary | plainify | strings.TrimSpace | truncate 160 }}{{ end }}
+<meta name="description" content="{{ $description }}">
+<meta name="author" content="{{ site.Params.author }}">
+<link rel="canonical" href="{{ .Permalink }}">
+{{- range .AlternativeOutputFormats }}
+{{ printf `<link rel=%q type=%q href=%q title=%q>` .Rel .MediaType.Type .Permalink site.Title | safeHTML }}
+{{- end }}
+{{- partial "opengraph.html" . }}
+{{- partial "twitter_cards.html" . }}
+{{- partial "schema.html" . }}
+<meta name="color-scheme" content="light dark">
+<script>
+  // Set the theme before first paint: saved choice, else the system preference.
+  (function () {
+    var saved = null;
+    try { saved = localStorage.getItem("theme"); } catch (e) {}
+    var dark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    document.documentElement.dataset.theme = saved || (dark ? "dark" : "light");
+  })();
+</script>
+<link rel="preload" href="{{ "fonts/newsreader-latin.woff2" | relURL }}" as="font" type="font/woff2" crossorigin>
+{{- $css := slice (resources.Get "css/fonts.css") (resources.Get "css/main.css") (resources.Get "css/syntax.css") | resources.Concat "css/site.css" | minify | fingerprint }}
+<link rel="stylesheet" href="{{ $css.RelPermalink }}" integrity="{{ $css.Data.Integrity }}">
+{{- $js := resources.Get "js/site.js" | minify | fingerprint }}
+<script src="{{ $js.RelPermalink }}" integrity="{{ $js.Data.Integrity }}" defer></script>

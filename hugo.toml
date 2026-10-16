@@ -1,21 +1,19 @@
 baseURL = "https://faiface.github.io/"
 locale = "en-us"
 title = "faiface blog"
-theme = "PaperMod"
 
 enableRobotsTXT = true
+
+# No post uses tags or categories, so don't generate any pages or feeds for them.
+disableKinds = ["taxonomy", "term"]
 
 # Old links must keep working: posts have always lived at /post/<file-name>/.
 [permalinks]
   post = "/post/:contentbasename/"
 
-[taxonomies]
-  tag = "tags"
-  category = "categories"
-
-# RSS at /index.xml and /post/index.xml (same paths as the old site); JSON powers search.
+# RSS at /index.xml and /post/index.xml, the same paths as the old site.
 [outputs]
-  home = ["HTML", "RSS", "JSON"]
+  home = ["HTML", "RSS"]
   section = ["HTML", "RSS"]
 
 [services.rss]
@@ -26,51 +24,25 @@ enableRobotsTXT = true
 
 [params]
   author = "Michal Štrba"
-  description = "faiface blog"
-  defaultTheme = "auto"
-  mainSections = ["post"]
-  comments = true
-  ShowReadingTime = true
-  ShowPostNavLinks = true
-  ShowCodeCopyButtons = true
-  ShowRssButtonInSectionTermList = true
-  ShowFullTextinRSS = true
-  DateFormat = "January 2, 2006"
+  description = "Posts on programming and programming languages."
 
-  # New comments live in GitHub Discussions on this repo. Fill in repoId and categoryId
-  # (from https://giscus.app) to turn them on; until then only the archived comments show.
+  # New comments live in GitHub Discussions on this repo, via giscus (https://giscus.app).
   [params.giscus]
     repo = "faiface/faiface.github.io"
     repoId = "MDEwOlJlcG9zaXRvcnk5OTM4MzY2Nw=="
     category = "Comments"
     categoryId = "DIC_kwDOBex5c84DIjk7"
 
-  [params.homeInfoParams]
-    Title = "faiface blog"
-    Content = "Posts on programming and programming languages."
-
-  [[params.socialIcons]]
-    name = "github"
-    url = "https://github.com/faiface"
-
-  [[params.socialIcons]]
-    name = "rss"
-    url = "index.xml"
-
 [menus]
   [[menus.main]]
-    name = "Posts"
+    name = "All posts"
     pageRef = "/post"
     weight = 10
   [[menus.main]]
-    name = "Archive"
-    pageRef = "/archives"
+    name = "RSS"
+    url = "/index.xml"
     weight = 20
   [[menus.main]]
-    name = "Search"
-    pageRef = "/search"
+    name = "GitHub"
+    url = "https://github.com/faiface"
     weight = 30
-  [[menus.main]]
-    name = "Tags"
-    pageRef = "/tags"
-    weight = 40

@@ -1,0 +1,26 @@
+{{- define "main" }}
+{{- $posts := where site.RegularPages "Section" "post" }}
+<p class="tagline">{{ site.Params.description }}</p>
+<div class="front">
+  {{- with index $posts 0 }}
+  <article class="lead">
+    <h2 class="lead-title"><a href="{{ .RelPermalink }}">{{ .Title }}</a></h2>
+    <p class="lead-summary">{{ .Summary | plainify | htmlUnescape }}</p>
+    <p class="meta">{{ partial "post_meta.html" . }}</p>
+  </article>
+  {{- end }}
+  {{- with after 1 $posts }}
+  <aside class="rail" aria-labelledby="rail-label">
+    <h2 class="rail-label" id="rail-label">More posts</h2>
+    {{- range first 5 . }}
+    <article class="rail-item">
+      <h3 class="rail-title"><a href="{{ .RelPermalink }}">{{ .Title }}</a></h3>
+      <p class="rail-summary">{{ .Summary | plainify | htmlUnescape }}</p>
+      <p class="meta">{{ partial "post_meta.html" . }}</p>
+    </article>
+    {{- end }}
+    <a class="rail-all" href="{{ "post/" | relURL }}">All posts →</a>
+  </aside>
+  {{- end }}
+</div>
+{{- end }}

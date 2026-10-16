@@ -1,0 +1,19 @@
+{{- /* Pages grouped by year, newest first. */ -}}
+<div class="post-index">
+  {{- range .GroupByDate "2006" }}
+  <section class="year">
+    <h2 class="year-label">{{ .Key }}</h2>
+    {{- range .Pages }}
+    <article class="index-item">
+      <p class="meta"><time datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date | time.Format "January 2" }}</time></p>
+      <div>
+        <h3 class="index-title"><a href="{{ .RelPermalink }}">{{ .Title }}</a></h3>
+        {{- with .Summary }}
+        <p class="index-summary">{{ . | plainify | htmlUnescape }}</p>
+        {{- end }}
+      </div>
+    </article>
+    {{- end }}
+  </section>
+  {{- end }}
+</div>
