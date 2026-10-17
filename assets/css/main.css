@@ -458,21 +458,21 @@ video {
 }
 
 .post-content > :is(.highlight, pre, hr, table, figure) + h2 {
-  margin-top: calc(var(--gap) * 3.8 + var(--leading));
+  margin-top: calc(var(--gap) * 2.75 + var(--leading));
 }
 
 .post-content > :is(.highlight, pre, hr, table, figure) + :is(h3, h4) {
-  margin-top: calc(var(--gap) * 2.7 + var(--leading));
+  margin-top: calc(var(--gap) * 2.2 + var(--leading));
 }
 
-/* Headings: about 64px above and 32px below an h2, 48px and 28px around an h3 (desktop). */
+/* Headings: about 48px above and 31px below an h2, 40px and 28px around an h3 (desktop). */
 .post-content > h2 {
-  margin-top: calc(var(--gap) * 3.8);
+  margin-top: calc(var(--gap) * 2.75);
 }
 
 .post-content > h3,
 .post-content > h4 {
-  margin-top: calc(var(--gap) * 2.7);
+  margin-top: calc(var(--gap) * 2.2);
 }
 
 .post-content > h2 + * {
