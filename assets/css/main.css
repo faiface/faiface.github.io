@@ -401,18 +401,103 @@ video {
   font-size: 12px;
 }
 
+/* Vertical spacing is designed as visible whitespace, ink to ink.
+   Text lines already carry --leading of whitespace above and below (half of line-height minus
+   font size); --gap is what a paragraph break adds on top. So a paragraph break shows
+   2 × leading + gap (13 + 15 = 28px on desktop), 75% of the text size, inside the 50–100%
+   that Practical Typography recommends. Headings sit closer to the text they introduce than
+   to the text before them, with more space around them than a paragraph break. */
+@property --gap {
+  syntax: "<length>";
+  inherits: true;
+  initial-value: 0px;
+}
+
+@property --leading {
+  syntax: "<length>";
+  inherits: true;
+  initial-value: 0px;
+}
+
 .post-content {
+  --gap: 0.75em;
+  --leading: calc((1.65em - 1em) / 2);
   font-size: 20px;
   line-height: 1.65;
   overflow-wrap: break-word;
+}
+
+@media (max-width: 600px) {
+  /* 18px fits about 15% more characters on a phone line than 20px (roughly 40 instead of 35). */
+  .post-content {
+    font-size: 18px;
+  }
 }
 
 .post-content > p:first-of-type {
   font-size: 1.1em;
 }
 
-.post-content :is(p, ul, ol, blockquote, pre, .highlight, table, figure) {
-  margin: 0 0 1.1em;
+.post-content > * {
+  margin-block: 0;
+}
+
+.post-content > * + * {
+  margin-top: var(--gap);
+}
+
+/* Code blocks, rules, tables and figures have no line leading of their own, so the gaps
+   next to them get it added back to match text-to-text gaps. */
+.post-content > :is(.highlight, pre, hr, table, figure),
+.post-content > :is(.highlight, pre, hr, table, figure) + * {
+  margin-top: calc(var(--gap) + var(--leading));
+}
+
+.post-content > :is(.highlight, pre, hr, table, figure) + :is(.highlight, pre, hr, table, figure) {
+  margin-top: calc(var(--gap) + 2 * var(--leading));
+}
+
+.post-content > :is(.highlight, pre, hr, table, figure) + h2 {
+  margin-top: calc(var(--gap) * 3.8 + var(--leading));
+}
+
+.post-content > :is(.highlight, pre, hr, table, figure) + :is(h3, h4) {
+  margin-top: calc(var(--gap) * 2.7 + var(--leading));
+}
+
+/* Headings: about 64px above and 32px below an h2, 48px and 28px around an h3 (desktop). */
+.post-content > h2 {
+  margin-top: calc(var(--gap) * 3.8);
+}
+
+.post-content > h3,
+.post-content > h4 {
+  margin-top: calc(var(--gap) * 2.7);
+}
+
+.post-content > h2 + * {
+  margin-top: calc(var(--gap) * 1.6);
+}
+
+.post-content > :is(h3, h4) + * {
+  margin-top: calc(var(--gap) * 1.4);
+}
+
+.post-content > h2 + :is(.highlight, pre, hr, table, figure) {
+  margin-top: calc(var(--gap) * 1.6 + var(--leading));
+}
+
+.post-content > :is(h3, h4) + :is(.highlight, pre, hr, table, figure) {
+  margin-top: calc(var(--gap) * 1.4 + var(--leading));
+}
+
+/* Inside lists and quotes: paragraphs keep the paragraph rhythm. */
+.post-content :is(li, blockquote) > * {
+  margin-block: 0;
+}
+
+.post-content :is(li, blockquote) > * + * {
+  margin-top: var(--gap);
 }
 
 /* In headings: match the sans heading's larger x-height. */
@@ -421,7 +506,6 @@ video {
 }
 
 .post-content :is(h2, h3, h4) {
-  margin: 1.8em 0 0.6em;
   font-family: var(--sans);
   font-weight: 700;
   line-height: 1.25;
@@ -452,13 +536,14 @@ video {
 }
 
 .post-content blockquote {
+  margin-inline: 0;
   padding-left: 1em;
   border-left: 3px solid var(--rule);
   color: var(--muted);
 }
 
 .post-content hr {
-  margin: 2em auto;
+  margin-inline: auto;
   width: 56px;
   border: 0;
   border-top: 1px solid var(--ink-rule);
